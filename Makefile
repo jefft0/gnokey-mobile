@@ -37,8 +37,8 @@ $(gen_sum): $(gen_src)
 	)
 
 _api.generate.modules:
-	$(call check-program, yarn)
-	cd api; yarn
+	$(call check-program, npm)
+	cd api; npm install
 
 _api.clean.modules:
 	cd api; rm -fr node_modules
