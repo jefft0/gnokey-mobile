@@ -1,59 +1,55 @@
-import { StyleSheet, Text, View, Button as RNButton, ScrollView, TextInput as RNTextInput, Alert as RNAlert } from "react-native";
+import { StyleSheet, Text, View, ScrollView, TextInput as RNTextInput, Alert as RNAlert } from "react-native";
 import React, { useEffect, useRef, useState } from "react";
 import { router, useNavigation } from "expo-router";
-import TextInput from "components/textinput";
-import Button from "components/button";
-import Spacer from "components/spacer";
-import * as Clipboard from "expo-clipboard";
-import { selectMasterPassword, useAppDispatch, useAppSelector } from "@/redux";
-import Alert from "@/components/alert";
-import { Layout } from "@/components/index";
 import { useGnoNativeContext } from "@gnolang/gnonative";
 import {
+  selectMasterPassword, useAppDispatch, useAppSelector,
   SignUpState,
-  clearSignUpState,
+  initSignUpState,
   existingAccountSelector,
   newAccountSelector,
   onboarding,
   signUp,
   signUpStateSelector,
-} from "redux/features/signupSlice";
-import { ProgressViewModal } from "@/components/view/progress";
+  selectKeyName,
+  setKeyName,
+  selectPhrase,
+} from "@/redux";
+import { ProgressViewModal, ChainSelectView } from "@/views";
+import { TextCopy, Layout, Alert, Spacer, Button, TextInput } from "@/components";
+import { Octicons } from "@expo/vector-icons";
+import { colors } from "@/assets";
 
 export default function Page() {
-  const [name, setName] = useState("");
-  const [phrase, setPhrase] = useState<string>("");
+
   const [error, setError] = useState<string | undefined>(undefined);
   const [loading, setLoading] = useState(false);
-  const inputRef = useRef<RNTextInput>(null);
 
-  const masterPassword = useAppSelector(selectMasterPassword);
+  const inputRef = useRef<RNTextInput>(null);
 
   const navigation = useNavigation();
   const { gnonative } = useGnoNativeContext();
+
   const dispatch = useAppDispatch();
+
+  const masterPassword = useAppSelector(selectMasterPassword);
   const signUpState = useAppSelector(signUpStateSelector);
   const newAccount = useAppSelector(newAccountSelector);
   const existingAccount = useAppSelector(existingAccountSelector);
+  const keyName = useAppSelector(selectKeyName);
+  const phrase = useAppSelector(selectPhrase);
 
   useEffect(() => {
     const unsubscribe = navigation.addListener("focus", async () => {
-      setName("");
       setError(undefined);
-      dispatch(clearSignUpState())
       inputRef.current?.focus();
-      try {
-        setPhrase(await gnonative.generateRecoveryPhrase());
-      } catch (error) {
-        console.log(error);
-      }
     });
     return unsubscribe;
   }, [navigation]);
 
   useEffect(() => {
     (async () => {
-      console.log("signUpState ->", signUpState);
+      // console.log("signUpState ->", signUpState);
 
       if (signUpState === SignUpState.user_exists_on_blockchain_and_local_storage) {
         setError(
@@ -83,26 +79,32 @@ export default function Page() {
         );
         return;
       }
+      if (signUpState === SignUpState.user_exists_under_differente_key_local) {
+        setError(
+          "This name is already registered locally under a different key. Please choose another name."
+        );
+        return;
+      }
       if (signUpState === SignUpState.account_created && newAccount) {
-        router.push("/home");
+        router.replace("/home");
       }
     })();
   }, [signUpState, newAccount]);
 
-  const copyToClipboard = async () => {
-    await Clipboard.setStringAsync(phrase || "");
-  };
-
   const onCreate = async () => {
-    dispatch(clearSignUpState());
     setError(undefined);
-    if (!name) {
+    if (!keyName) {
       setError("Please fill out all fields");
       return;
     }
 
+    if (!phrase) {
+      setError("Phrase not found.");
+      return
+    }
+
     // Use the same regex and error message as r/demo/users
-    if (!name.match(/^[a-z]+[_a-z0-9]{5,16}$/)) {
+    if (!keyName.match(/^[a-z]+[_a-z0-9]{5,16}$/)) {
       setError("Account name must be at least 6 characters, lowercase alphanumeric with underscore");
       return;
     }
@@ -113,7 +115,7 @@ export default function Page() {
     }
 
     if (signUpState === SignUpState.user_exists_only_on_local_storage && existingAccount) {
-      await gnonative.activateAccount(name);
+      await gnonative.activateAccount(keyName);
       await gnonative.setPassword(masterPassword, existingAccount.address);
       await dispatch(onboarding({ account: existingAccount })).unwrap();
       return;
@@ -121,7 +123,7 @@ export default function Page() {
 
     try {
       setLoading(true);
-      await dispatch(signUp({ name, password: masterPassword, phrase })).unwrap();
+      await dispatch(signUp({ name: keyName, password: masterPassword, phrase })).unwrap();
     } catch (error) {
       RNAlert.alert("Error", "" + error);
       setError("" + error);
@@ -130,6 +132,11 @@ export default function Page() {
       setLoading(false);
     }
   };
+
+  const onBack = () => {
+    router.back()
+    dispatch(initSignUpState());
+  }
 
   return (
     <Layout.Container>
@@ -142,29 +149,34 @@ export default function Page() {
               <TextInput
                 ref={inputRef}
                 placeholder="Key name"
-                value={name}
-                onChangeText={setName}
+                value={keyName}
+                onChangeText={x => dispatch(setKeyName(x))}
                 autoCapitalize="none"
                 autoCorrect={false}
               />
             </View>
-            <View style={{ minWidth: 200, paddingTop: 8 }}>
-              <Text>Your seed phrase:</Text>
+            <Spacer />
+            <View style={{ minWidth: 200, paddingTop: 8, paddingBottom: 8 }}>
+              <TextCopy text={phrase}>
+                <Text style={{ flexDirection: "row" }}>
+                  <Octicons name="copy" size={12} color={colors.primary} />
+                  <Text > Your seed phrase: </Text>
+                  <Text style={{ fontWeight: 700 }}>{phrase}</Text>
+                </Text>
+              </TextCopy>
               <Spacer />
-              <Text>{phrase}</Text>
-              <RNButton title="copy" onPress={copyToClipboard} />
-              <Spacer />
+              <ChainSelectView />
               <Alert severity="error" message={error} />
               <Spacer />
               <Button.TouchableOpacity title="Create" onPress={onCreate} variant="primary" loading={loading} />
-              <Spacer space={16} />
-              <Button.TouchableOpacity title="Back" onPress={() => router.back()} variant="secondary" disabled={loading} />
+              <Spacer space={8} />
+              <Button.TouchableOpacity title="Back" onPress={onBack} variant="secondary" disabled={loading} />
             </View>
           </View>
         </ScrollView>
         <ProgressViewModal />
       </Layout.Body>
-    </Layout.Container>
+    </Layout.Container >
   );
 }
 

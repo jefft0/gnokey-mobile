@@ -1,13 +1,15 @@
-import { PayloadAction, createAsyncThunk, createSlice } from "@reduxjs/toolkit";
+import { PayloadAction, RootState, createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import { GnoNativeApi, KeyInfo } from "@gnolang/gnonative";
 import { ThunkExtra } from "@/src/providers/redux-provider";
 import { Alert } from "react-native";
-import { User } from "@/types";
+import { NetworkMetainfo } from "@/types";
 import { Coin } from '@buf/gnolang_gnonative.bufbuild_es/gnonativetypes_pb';
+import chains from '@/assets/chains.json'
 
 export enum SignUpState {
   user_exists_on_blockchain_and_local_storage = 'user_exists_on_blockchain_and_local_storage',
   user_exists_under_differente_key = 'user_exists_under_differente_key',
+  user_exists_under_differente_key_local = 'user_exists_under_differente_key_local',
   user_exists_only_on_local_storage = 'user_exists_only_on_local_storage',
   user_already_exists_on_blockchain_under_different_name = 'user_already_exists_on_blockchain_under_different_name',
   user_already_exists_on_blockchain = 'user_already_exists_on_blockchain',
@@ -20,6 +22,11 @@ export interface CounterState {
   existingAccount?: KeyInfo;
   loading: boolean;
   progress: string[];
+  chainsAvailable: NetworkMetainfo[];
+  selectedChain?: NetworkMetainfo;
+  registerAccount: boolean;
+  keyName?: string;
+  phrase?: string;
 }
 
 const initialState: CounterState = {
@@ -28,6 +35,8 @@ const initialState: CounterState = {
   existingAccount: undefined,
   loading: false,
   progress: [],
+  chainsAvailable: chains,
+  registerAccount: false
 };
 
 interface SignUpParam {
@@ -56,7 +65,38 @@ type SignUpResponse = { newAccount?: KeyInfo, existingAccount?: KeyInfo, state: 
 export const signUp = createAsyncThunk<SignUpResponse, SignUpParam, ThunkExtra>("user/signUp", async (param, thunkAPI) => {
 
   const { name, password, phrase } = param;
+  const { registerAccount, selectedChain } = (thunkAPI.getState() as RootState).signUp;
+
   const gnonative = thunkAPI.extra.gnonative as GnoNativeApi;
+
+  // do not register on chain
+  if (!registerAccount) {
+
+    thunkAPI.dispatch(addProgress(`checking if "${name}" is already on local storage`))
+    const userOnLocalStorage = await checkForUserOnLocalStorage(gnonative, name);
+    thunkAPI.dispatch(addProgress(`response for "${name}": ${JSON.stringify(userOnLocalStorage)}`))
+
+    if (userOnLocalStorage) {
+      thunkAPI.dispatch(addProgress(`SignUpState.user_exists_under_differente_key_local`))
+      // CASE 1.1: Bad case. Choose new name. (Delete name in keystore?)
+      return { newAccount: undefined, state: SignUpState.user_exists_under_differente_key_local }
+    }
+
+    thunkAPI.dispatch(addProgress(`registerAccount is false`))
+    const newAccount = await gnonative.createAccount(name, phrase, password);
+    console.log("createAccount response: " + JSON.stringify(newAccount));
+
+    if (!newAccount) {
+      thunkAPI.dispatch(addProgress(`Failed to create account "${name}"`))
+      throw new Error(`Failed to create account "${name}"`);
+    }
+
+    await gnonative.activateAccount(name);
+    await gnonative.setPassword(password, newAccount.address);
+
+    thunkAPI.dispatch(addProgress(`SignUpState.account_created`))
+    return { newAccount, state: SignUpState.account_created };
+  }
 
   thunkAPI.dispatch(addProgress(`checking if "${name}" is already registered on the blockchain.`))
   const blockchainUser = await checkForUserOnBlockchain(gnonative, name, phrase);
@@ -111,7 +151,7 @@ export const signUp = createAsyncThunk<SignUpResponse, SignUpParam, ThunkExtra>(
     await gnonative.setPassword(password, newAccount.address);
 
     thunkAPI.dispatch(addProgress(`onboarding "${name}"`))
-    await onboard(gnonative, newAccount);
+    await onboard(gnonative, newAccount, selectedChain?.faucetAddress);
 
     thunkAPI.dispatch(addProgress(`SignUpState.account_created`))
     return { newAccount, state: SignUpState.account_created };
@@ -121,12 +161,34 @@ export const signUp = createAsyncThunk<SignUpResponse, SignUpParam, ThunkExtra>(
 export const onboarding = createAsyncThunk<SignUpResponse, { account: KeyInfo }, ThunkExtra>("user/onboarding", async (param, thunkAPI) => {
   thunkAPI.dispatch(addProgress(`onboarding "${param.account.name}"`))
 
+  const { selectedChain } = (thunkAPI.getState() as RootState).signUp;
+
   const { account } = param;
   const gnonative = thunkAPI.extra.gnonative as GnoNativeApi;
-  await onboard(gnonative, account);
+  await onboard(gnonative, account, selectedChain?.faucetAddress);
 
   thunkAPI.dispatch(addProgress(`SignUpState.account_created`))
   return { newAccount: account, state: SignUpState.account_created };
+})
+
+export const getCurrentChain = createAsyncThunk<NetworkMetainfo, void, ThunkExtra>("user/getCurrentChain", async (_, thunkAPI) => {
+
+  const gnonative = thunkAPI.extra.gnonative as GnoNativeApi;
+  const remote = await gnonative.getRemote();
+
+  const currentChain = chains.find((chain) => chain.gnoAddress === remote);
+  if (!currentChain) {
+    throw new Error("Current chain not found");
+  }
+
+  console.log("currentChain", currentChain);
+  return currentChain;
+})
+
+export const initSignUpState = createAsyncThunk<{ phrase: string }, void, ThunkExtra>("user/initSignUpState", async (_, thunkAPI) => {
+  // call getCurrentChain
+  await thunkAPI.dispatch(getCurrentChain()).unwrap();
+  return { phrase: await (thunkAPI.extra.gnonative as GnoNativeApi).generateRecoveryPhrase() };
 })
 
 const checkForUserOnLocalStorage = async (gnonative: GnoNativeApi, name: string): Promise<KeyInfo | undefined> => {
@@ -186,7 +248,7 @@ function convertToJson(result: string | undefined) {
   return json;
 }
 
-const onboard = async (gnonative: GnoNativeApi, account: KeyInfo) => {
+const onboard = async (gnonative: GnoNativeApi, account: KeyInfo, faucetRemote: string) => {
   const { name, address } = account
   const address_bech32 = await gnonative.addressToBech32(address);
   console.log("onboarding %s, with address: %s", name, address_bech32);
@@ -200,8 +262,8 @@ const onboard = async (gnonative: GnoNativeApi, account: KeyInfo) => {
       return;
     }
 
-    const response = await sendCoins(address_bech32);
-    console.log("sent coins %s", response);
+    const response = await sendCoins(address_bech32, faucetRemote);
+    console.log("coins sent, response: %s", response);
 
     await registerAccount(gnonative, account);
   } catch (error) {
@@ -214,7 +276,7 @@ const registerAccount = async (gnonative: GnoNativeApi, account: KeyInfo) => {
   try {
     const gasFee = "10000000ugnot";
     const gasWanted = BigInt(20000000);
-    const send = [new Coin({denom: "ugnot", amount: BigInt(200000000)})];
+    const send = [new Coin({ denom: "ugnot", amount: BigInt(200000000) })];
     const args: Array<string> = ["", account.name, "Profile description"];
     for await (const response of await gnonative.call("gno.land/r/demo/users", "Register", args, gasFee, gasWanted, account.address, send)) {
       console.log("response: ", JSON.stringify(response));
@@ -244,7 +306,7 @@ const hasCoins = async (gnonative: GnoNativeApi, address: Uint8Array) => {
   }
 };
 
-const sendCoins = async (address: string) => {
+const sendCoins = async (address: string, faucetRemote: string) => {
   const myHeaders = new Headers();
   myHeaders.append("Content-Type", "application/json");
 
@@ -260,7 +322,6 @@ const sendCoins = async (address: string) => {
   };
 
   // @ts-ignore
-  const faucetRemote = process.env.EXPO_PUBLIC_FAUCET_REMOTE;
   if (!faucetRemote) {
     throw new Error("faucet remote address is undefined");
   }
@@ -284,11 +345,17 @@ export const signUpSlice = createSlice({
     clearProgress: (state) => {
       state.progress = [];
     },
-    clearSignUpState: (state) => {
-      state.loading = false;
-      state.newAccount = undefined;
-      state.existingAccount = undefined;
-      state.signUpState = undefined;
+    addCustomChain: (state, action: PayloadAction<NetworkMetainfo>) => {
+      state.chainsAvailable = [...state.chainsAvailable, action.payload];
+    },
+    setRegisterAccount: (state, action: PayloadAction<boolean>) => {
+      state.registerAccount = action.payload;
+    },
+    setKeyName: (state, action: PayloadAction<string>) => {
+      state.keyName = action.payload
+    },
+    setSelectedChain: (state, action: PayloadAction<NetworkMetainfo | undefined>) => {
+      state.selectedChain = action.payload
     }
   },
   extraReducers(builder) {
@@ -305,6 +372,15 @@ export const signUpSlice = createSlice({
       state.newAccount = action.payload?.newAccount;
       state.existingAccount = action.payload?.existingAccount;
       state.signUpState = action.payload?.state;
+    }).addCase(initSignUpState.fulfilled, (state, action) => {
+      state.phrase = action.payload.phrase;
+      state.loading = false;
+      state.newAccount = undefined;
+      state.existingAccount = undefined;
+      state.signUpState = undefined;
+      state.keyName = "";
+    }).addCase(getCurrentChain.fulfilled, (state, action) => {
+      state.selectedChain = action.payload;
     })
   },
 
@@ -314,9 +390,18 @@ export const signUpSlice = createSlice({
     signUpStateSelector: (state) => state.signUpState,
     newAccountSelector: (state) => state.newAccount,
     existingAccountSelector: (state) => state.existingAccount,
+    selectChainsAvailable: (state) => state.chainsAvailable,
+    selectRegisterAccount: (state) => state.registerAccount,
+    selectKeyName: (state) => state.keyName,
+    selectSelectedChain: (state) => state.selectedChain,
+    selectPhrase: (state) => state.phrase
   },
 });
 
-export const { addProgress, signUpState, clearProgress, clearSignUpState } = signUpSlice.actions;
+export const { addProgress, signUpState, clearProgress, addCustomChain, setRegisterAccount, setKeyName,
+  setSelectedChain
+} = signUpSlice.actions;
 
-export const { selectLoading, selectProgress, signUpStateSelector, newAccountSelector, existingAccountSelector } = signUpSlice.selectors;
+export const { selectLoading, selectProgress, signUpStateSelector, newAccountSelector, existingAccountSelector,
+  selectChainsAvailable, selectRegisterAccount, selectKeyName, selectSelectedChain, selectPhrase
+} = signUpSlice.selectors;
