@@ -23,7 +23,7 @@ export interface SignupState {
   existingAccount?: KeyInfo;
   loading: boolean;
   progress: string[];
-  chainsAvailable: NetworkMetainfo[];
+  customChains: NetworkMetainfo[];
   selectedChain?: NetworkMetainfo;
   registerAccount: boolean;
   keyName?: string;
@@ -36,7 +36,7 @@ const initialState: SignupState = {
   existingAccount: undefined,
   loading: false,
   progress: [],
-  chainsAvailable: chains,
+  customChains: [],
   selectedChain: undefined,
   registerAccount: false,
 };
@@ -190,7 +190,7 @@ export const getCurrentChain = createAsyncThunk<NetworkMetainfo, void, ThunkExtr
   const gnonative = thunkAPI.extra.gnonative as GnoNativeApi;
   const remote = await gnonative.getRemote();
 
-  const currentChain = chains.find((chain : NetworkMetainfo) => chain.gnoAddress === remote);
+  const currentChain = chains.find((chain: NetworkMetainfo) => chain.gnoAddress === remote);
   if (!currentChain) {
     throw new Error("Current chain not found");
   }
@@ -364,7 +364,7 @@ export const signUpSlice = createSlice({
       state.progress = [];
     },
     addCustomChain: (state, action: PayloadAction<NetworkMetainfo>) => {
-      state.chainsAvailable = [...state.chainsAvailable, action.payload];
+      state.customChains = state.customChains ? [...state.customChains, action.payload] : [action.payload];
     },
     setRegisterAccount: (state, action: PayloadAction<boolean>) => {
       state.registerAccount = action.payload;
@@ -408,7 +408,7 @@ export const signUpSlice = createSlice({
     signUpStateSelector: (state) => state.signUpState,
     newAccountSelector: (state) => state.newAccount,
     existingAccountSelector: (state) => state.existingAccount,
-    selectChainsAvailable: (state) => state.chainsAvailable,
+    selectChainsAvailable: (state) => (state.customChains ? chains.concat(state.customChains) : chains) as NetworkMetainfo[],
     selectRegisterAccount: (state) => state.registerAccount,
     selectKeyName: (state) => state.keyName,
     selectSelectedChain: (state) => state.selectedChain,
