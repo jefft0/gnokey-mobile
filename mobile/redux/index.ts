@@ -4,8 +4,6 @@ import { RootState, AppDispatch } from "./root-reducer";
 
 export const useAppSelector: TypedUseSelectorHook<RootState> = useSelector;
 
-export const useAppDispatch: () => AppDispatch = useDispatch;
-
-export { AppDispatch }
+export const useAppDispatch = useDispatch.withTypes<AppDispatch>()
 
 export * from "./features";

@@ -38,22 +38,6 @@ const ReduxProvider: React.FC<Props> = ({ children }) => {
   // Exposing GnoNative API to reduxjs/toolkit
   const { gnonative } = useGnoNativeContext();
 
-  // const store = configureStore({
-  //   reducer,
-  //   middleware: (getDefaultMiddleware) =>
-  //     getDefaultMiddleware({
-  //       serializableCheck: false,
-
-  //       thunk: {
-  //         // To make Thunk inject gnonative in all Thunk objects.
-  //         // https://redux.js.org/tutorials/essentials/part-6-performance-normalization#thunk-arguments
-  //         extraArgument: {
-  //           gnonative
-  //         },
-  //       },
-  //     }),
-  // });
-
   const store = configureStore({
     reducer: persistedReducer,
     middleware: (getDefaultMiddleware) =>

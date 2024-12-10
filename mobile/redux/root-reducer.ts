@@ -1,5 +1,5 @@
-import { combineSlices } from "@reduxjs/toolkit";
-import { vaultSlice, signinSlice, signUpSlice, linkingSlice } from "@/redux/features";
+import { combineSlices, configureStore, LinkingState } from "@reduxjs/toolkit";
+import { vaultSlice, signinSlice, signUpSlice, linkingSlice, VaultEditState, SignupState, SignInState } from "@/redux/features";
 
 const rootReducer = combineSlices({
     [vaultSlice.reducerPath]: vaultSlice.reducer,
@@ -9,12 +9,16 @@ const rootReducer = combineSlices({
 });
 
 export type RootState = {
-    user: typeof vaultSlice.getInitialState;
-    signin: typeof signinSlice.getInitialState;
-    signUp: typeof signUpSlice.getInitialState;
-    linking: typeof linkingSlice.getInitialState;
+    vault: VaultEditState;
+    signIn: SignInState;
+    signUp: SignupState;
+    linking: LinkingState;
 };
 
-export type AppDispatch = typeof vaultSlice.actions & typeof signinSlice.actions & typeof signUpSlice.actions & typeof linkingSlice.actions;
+const store = configureStore({
+    reducer: rootReducer,
+});
+
+export type AppDispatch = typeof store.dispatch
 
 export default rootReducer;
