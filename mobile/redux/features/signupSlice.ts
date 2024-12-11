@@ -201,9 +201,15 @@ export const getCurrentChain = createAsyncThunk<NetworkMetainfo, void, ThunkExtr
 })
 
 export const initSignUpState = createAsyncThunk<{ phrase: string }, void, ThunkExtra>("user/initSignUpState", async (_, thunkAPI) => {
-  // call getCurrentChain
-  await thunkAPI.dispatch(getCurrentChain()).unwrap();
-  return { phrase: await (thunkAPI.extra.gnonative as GnoNativeApi).generateRecoveryPhrase() };
+
+  let newPhrase = "";
+  try {
+    await thunkAPI.dispatch(getCurrentChain()).unwrap(); // to force update on redux store
+    newPhrase = await (thunkAPI.extra.gnonative as GnoNativeApi).generateRecoveryPhrase()
+  } catch (error) {
+    console.error("error on qEval", error);
+  }
+  return { phrase: newPhrase };
 })
 
 const checkForUserOnLocalStorage = async (gnonative: GnoNativeApi, name: string): Promise<KeyInfo | undefined> => {
@@ -392,6 +398,7 @@ export const signUpSlice = createSlice({
       state.existingAccount = action.payload?.existingAccount;
       state.signUpState = action.payload?.state;
     }).addCase(initSignUpState.fulfilled, (state, action) => {
+      console.log("initSignUpState.fulfilled nnnnnn", action.payload);
       state.phrase = action.payload.phrase;
       state.loading = false;
       state.newAccount = undefined;
@@ -417,7 +424,7 @@ export const signUpSlice = createSlice({
 });
 
 export const selectChainsAvailable = createSelector(
-  (state : RootState) => state.signUp.customChains,
+  (state: RootState) => state.signUp.customChains,
   (customChains) => customChains ? chains.concat(customChains) : chains
 );
 

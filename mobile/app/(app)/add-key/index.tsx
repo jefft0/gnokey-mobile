@@ -86,7 +86,7 @@ export default function Page() {
         return;
       }
       if (signUpState === SignUpState.account_created && newAccount) {
-        router.replace("/home");
+        onBack()
       }
     })();
   }, [signUpState, newAccount]);
@@ -134,8 +134,8 @@ export default function Page() {
   };
 
   const onBack = () => {
-    router.back()
     dispatch(initSignUpState());
+    router.back()
   }
 
   return (
