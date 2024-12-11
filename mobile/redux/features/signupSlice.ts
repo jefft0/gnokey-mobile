@@ -417,7 +417,7 @@ export const signUpSlice = createSlice({
 });
 
 export const selectChainsAvailable = createSelector(
-  (state) => state.customChains,
+  (state : RootState) => state.signUp.customChains,
   (customChains) => customChains ? chains.concat(customChains) : chains
 );
 
