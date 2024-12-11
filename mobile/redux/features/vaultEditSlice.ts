@@ -1,12 +1,14 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import { GnoNativeApi, KeyInfo } from "@gnolang/gnonative";
 import { ThunkExtra } from "@/providers/redux-provider";
+import { RootState } from "../root-reducer";
 
-export interface VaultEditState {
+export interface VaultState {
   vaultToEdit: KeyInfo | undefined;
+  keyinfosChains?: Map<string, string[]>;
 }
 
-const initialState: VaultEditState = {
+const initialState: VaultState = {
   vaultToEdit: undefined,
 };
 
@@ -37,13 +39,64 @@ export const saveChanges = createAsyncThunk<boolean, SaveChangesParam, ThunkExtr
   return true;
 });
 
+/**
+ * Check if each key is present in which chain.
+ * */
+export const checkForKeyOnChains = createAsyncThunk<Map<string, string[]>, void, ThunkExtra>("vault/checkForKeyOnChains", async (_, thunkAPI) => {
+  const gnonative = thunkAPI.extra.gnonative as GnoNativeApi;
+
+  const keyinfos = await gnonative.listKeyInfo();
+  const chains = (thunkAPI.getState() as RootState).signUp.chainsAvailable;
+
+  const keyinfosChains = new Map<string, string[]>();
+
+  for (const chain of chains) {
+    await gnonative.setChainID(chain.chainId);
+    await gnonative.setRemote(chain.gnoAddress);
+
+    for (const key of keyinfos) {
+      console.log(`Checking key ${key.name} on chain ${chain.chainName}`);
+      const queryResponse = await hasCoins(gnonative, key.address);
+      console.log(`Key ${key.name} on chain ${chain.chainName} has coins: ${queryResponse}`);
+
+      keyinfosChains.has(key.name) ? keyinfosChains.get(key.name)?.push(chain.chainId) : keyinfosChains.set(key.name, [chain.chainId]);
+    }
+  }
+  return keyinfosChains;
+});
+
+const hasCoins = async (gnonative: GnoNativeApi, address: Uint8Array) => {
+  try {
+    console.log("checking if user has balance");
+    const balance = await gnonative.queryAccount(address);
+    console.log("account balance: %s", balance.accountInfo?.coins);
+
+    if (!balance.accountInfo) return false;
+
+    const hasCoins = balance.accountInfo.coins.length > 0;
+    const hasBalance = hasCoins && balance.accountInfo.coins[0].amount > 0;
+
+    return hasBalance;
+  } catch (error: any) {
+    console.log("error on hasBalance", error["rawMessage"]);
+    if (error["rawMessage"] === "invoke bridge method error: unknown: ErrUnknownAddress(#206)") return false;
+    return false;
+  }
+};
+
 export const vaultSlice = createSlice({
-  name: "vaultEdit",
+  name: "vault",
   initialState,
   reducers: {
     setVaultToEdit: (state, action) => {
       state.vaultToEdit = action.payload.vault;
     }
+  },
+  extraReducers: (builder) => {
+    builder.addCase(checkForKeyOnChains.fulfilled, (state, action) => {
+      console.log("checkForKeyOnChains.fulfilled", action.payload);
+      state.keyinfosChains = action.payload;
+    })
   },
   selectors: {
     selectVaultToEdit: (state) => state.vaultToEdit,

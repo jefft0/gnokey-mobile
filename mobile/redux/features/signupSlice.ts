@@ -186,16 +186,11 @@ export const onboarding = createAsyncThunk<SignUpResponse, { account: KeyInfo },
   return { newAccount: account, state: SignUpState.account_created };
 })
 
-export const getCurrentChain = createAsyncThunk<NetworkMetainfo, void, ThunkExtra>("user/getCurrentChain", async (_, thunkAPI) => {
-
+export const getCurrentChain = createAsyncThunk<NetworkMetainfo | undefined, void, ThunkExtra>("user/getCurrentChain", async (_, thunkAPI) => {
   const gnonative = thunkAPI.extra.gnonative as GnoNativeApi;
   const remote = await gnonative.getRemote();
-
-  const currentChain = chains.find((chain: NetworkMetainfo) => chain.gnoAddress === remote);
-  if (!currentChain) {
-    throw new Error("Current chain not found");
-  }
-
+  const combinedChains = selectChainsAvailable(thunkAPI.getState() as RootState);
+  const currentChain = combinedChains.find((chain: NetworkMetainfo) => chain.gnoAddress === remote);
   console.log("currentChain", currentChain);
   return currentChain;
 })
