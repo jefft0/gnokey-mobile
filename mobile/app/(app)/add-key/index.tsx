@@ -53,7 +53,7 @@ export default function Page() {
 
       if (signUpState === SignUpState.user_exists_on_blockchain_and_local_storage) {
         setError(
-          "This name is already registered on the blockchain and on this device. Please choose another name or press Back for a normal sign in."
+          "This name is already registered on the blockchain and on this device. Please choose another name."
         );
         return;
       }
@@ -86,7 +86,7 @@ export default function Page() {
         return;
       }
       if (signUpState === SignUpState.account_created && newAccount) {
-        router.replace("/home");
+        onBack()
       }
     })();
   }, [signUpState, newAccount]);
@@ -134,8 +134,9 @@ export default function Page() {
   };
 
   const onBack = () => {
-    router.back()
+    console.log("onBack");
     dispatch(initSignUpState());
+    router.back()
   }
 
   return (

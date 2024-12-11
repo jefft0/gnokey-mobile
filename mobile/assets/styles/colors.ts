@@ -25,7 +25,7 @@ export const colors = {
 
   button: {
     primary: "#006eff",
-    primaryDisabled: "#09182D",
+    primaryDisabled: "#d8e1ed",
     secondary: "rgba(30, 46, 66, 0.5)",
   },
 

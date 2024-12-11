@@ -3,13 +3,13 @@ import { FlatList, TouchableOpacity, View } from "react-native";
 import { useNavigation, useRouter } from "expo-router";
 import { Layout } from "@/components/index";
 import Text from "@/components/text";
-import { initSignUpState, selectMasterPassword, useAppDispatch, useAppSelector } from "@/redux";
+import { checkForKeyOnChains, initSignUpState, selectMasterPassword, useAppDispatch, useAppSelector } from "@/redux";
 import { KeyInfo, useGnoNativeContext } from "@gnolang/gnonative";
 import Octicons from '@expo/vector-icons/Octicons';
 import TextInput from "@/components/textinput";
 import { colors } from "@/assets/styles/colors";
 import VaultListItem from "@/components/list/vault-list/VaultListItem";
-import { setVaultToEdit } from "@/redux/features/vaultEditSlice";
+import { setVaultToEdit } from "@/redux";
 
 export default function Page() {
   const route = useRouter();
@@ -31,6 +31,7 @@ export default function Page() {
 
         const response = await gnonative.listKeyInfo();
         setAccounts(response);
+        dispatch(checkForKeyOnChains())
       } catch (error: unknown | Error) {
         console.error(error);
       } finally {

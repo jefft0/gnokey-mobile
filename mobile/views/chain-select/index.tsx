@@ -24,6 +24,7 @@ const ChainSelectView = () => {
             <Ruller />
             {currentNetwork ?
                 <NetworkListItem
+                    disabled={!isChecked}
                     onPress={() => router.push("/chain-selection")}
                     networkMetainfo={currentNetworkMetainfo}
                     currentRemote={currentNetwork.gnoAddress}
