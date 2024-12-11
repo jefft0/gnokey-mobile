@@ -5,13 +5,14 @@ import Text from '@/components/text';
 import Icons from '@/components/icons';
 
 export interface Props {
+  disabled?: boolean;
   currentRemote: string | undefined;
   networkMetainfo: NetworkMetainfo;
   onPress: (item: NetworkMetainfo) => void;
 }
 
-const NetworkListItem: React.FC<Props> = ({ networkMetainfo, currentRemote, onPress }: Props) => (
-  <Row style={{ margin: 4 }} onPress={() => onPress(networkMetainfo)}>
+const NetworkListItem: React.FC<Props> = ({ networkMetainfo, currentRemote, onPress, disabled }: Props) => (
+  <Row style={{margin: 4 }} disabled={disabled} onPress={() => disabled ? null : onPress(networkMetainfo)}>
     <LeftItens>
       <Text.BodyMedium style={{ color: colors.white }}>{networkMetainfo.chainName}</Text.BodyMedium>
       <Text.Caption1 style={{ color: colors.white }}>Address: {networkMetainfo.gnoAddress}</Text.Caption1>
@@ -28,12 +29,12 @@ const InUse = () => (
   </>
 );
 
-const Row = styled.TouchableOpacity`
+const Row = styled.TouchableOpacity<{ disabled?: boolean; }>`
   display: flex;
   flex-direction: row;
   justify-content: space-between;
   align-items: center;
-  background-color: ${colors.button.primary};
+  background: ${props => props.disabled ? colors.button.primaryDisabled : colors.button.primary};
   height: auto;
   padding: 9px 16px;
   border-radius: 18px;
