@@ -42,9 +42,7 @@ const ReduxProvider: React.FC<Props> = ({ children }) => {
     reducer: persistedReducer,
     middleware: (getDefaultMiddleware) =>
       getDefaultMiddleware({
-        serializableCheck: {
-          ignoredActions: [FLUSH, REHYDRATE, PAUSE, PERSIST, PURGE, REGISTER],
-        },
+        serializableCheck: false,
         thunk: {
           // To make Thunk inject gnonative in all Thunk objects.
           // https://redux.js.org/tutorials/essentials/part-6-performance-normalization#thunk-arguments
