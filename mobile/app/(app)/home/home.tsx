@@ -3,7 +3,7 @@ import { FlatList, TouchableOpacity, View } from "react-native";
 import { useNavigation, useRouter } from "expo-router";
 import { Layout } from "@/components/index";
 import Text from "@/components/text";
-import { checkForKeyOnChains, initSignUpState, selectMasterPassword, useAppDispatch, useAppSelector } from "@/redux";
+import { checkForKeyOnChains, initSignUpState, selectMasterPassword, useAppDispatch, useAppSelector, selectKeyInfoChains } from "@/redux";
 import { KeyInfo, useGnoNativeContext } from "@gnolang/gnonative";
 import Octicons from '@expo/vector-icons/Octicons';
 import TextInput from "@/components/textinput";
@@ -23,6 +23,8 @@ export default function Page() {
   const navigation = useNavigation();
   const dispatch = useAppDispatch();
   const masterPassword = useAppSelector(selectMasterPassword)
+
+  const keyInfoChains = useAppSelector(selectKeyInfoChains)
 
   useEffect(() => {
     const unsubscribe = navigation.addListener("focus", async () => {
@@ -76,6 +78,12 @@ export default function Page() {
     route.push("/add-key");
   }
 
+  const getChainNamePerKey = (keyInfo: KeyInfo): string[] | undefined => {
+    if (keyInfoChains instanceof Map &&  keyInfoChains?.has(keyInfo.address.toString())) {
+      return keyInfoChains.get(keyInfo.address.toString())
+    }
+  }
+
   if (loading) {
     return (
       <Layout.Container>
@@ -103,7 +111,7 @@ export default function Page() {
             <FlatList
               data={filteredAccounts}
               renderItem={({ item }) => (
-                <VaultListItem vault={item} onVaultPress={onChangeAccountHandler} />
+                <VaultListItem vault={item} onVaultPress={onChangeAccountHandler} chains={getChainNamePerKey(item)} />
               )}
               keyExtractor={(item) => item.name}
               ListEmptyComponent={<Text.Body>There are no items to list.</Text.Body>}

@@ -1,11 +1,12 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
+import { selectChainsAvailable } from "@/redux";
 import { GnoNativeApi, KeyInfo } from "@gnolang/gnonative";
 import { ThunkExtra } from "@/providers/redux-provider";
 import { RootState } from "../root-reducer";
 
 export interface VaultState {
   vaultToEdit: KeyInfo | undefined;
-  keyinfosChains?: Map<string, string[]>;
+  keyInfoChains?: Map<string, string[]>;
 }
 
 const initialState: VaultState = {
@@ -44,25 +45,29 @@ export const saveChanges = createAsyncThunk<boolean, SaveChangesParam, ThunkExtr
  * */
 export const checkForKeyOnChains = createAsyncThunk<Map<string, string[]>, void, ThunkExtra>("vault/checkForKeyOnChains", async (_, thunkAPI) => {
   const gnonative = thunkAPI.extra.gnonative as GnoNativeApi;
-
   const keyinfos = await gnonative.listKeyInfo();
-  const chains = (thunkAPI.getState() as RootState).signUp.chainsAvailable;
+  const chains = await selectChainsAvailable(thunkAPI.getState() as RootState);
 
-  const keyinfosChains = new Map<string, string[]>();
+  const keyInfoChains = new Map<string, string[]>();
 
   for (const chain of chains) {
+    console.log("checking keys on chain", chain.chainName);
+
     await gnonative.setChainID(chain.chainId);
     await gnonative.setRemote(chain.gnoAddress);
 
     for (const key of keyinfos) {
       console.log(`Checking key ${key.name} on chain ${chain.chainName}`);
-      const queryResponse = await hasCoins(gnonative, key.address);
-      console.log(`Key ${key.name} on chain ${chain.chainName} has coins: ${queryResponse}`);
+      const keyHasCoins = await hasCoins(gnonative, key.address);
+      console.log(`Key ${key.name} on chain ${chain.chainName} has coins: ${keyHasCoins}`);
 
-      keyinfosChains.has(key.name) ? keyinfosChains.get(key.name)?.push(chain.chainId) : keyinfosChains.set(key.name, [chain.chainId]);
+      if (keyHasCoins) {
+        console.log(`Key ${key.name} on chain ${chain.chainName} has coins`, JSON.stringify(key));
+        keyInfoChains.has(key.address.toString()) ? keyInfoChains.get(key.address.toString())?.push(chain.chainName) : keyInfoChains.set(key.address.toString(), [chain.chainName]);
+      }
     }
   }
-  return keyinfosChains;
+  return keyInfoChains;
 });
 
 const hasCoins = async (gnonative: GnoNativeApi, address: Uint8Array) => {
@@ -93,16 +98,20 @@ export const vaultSlice = createSlice({
     }
   },
   extraReducers: (builder) => {
-    builder.addCase(checkForKeyOnChains.fulfilled, (state, action) => {
-      console.log("checkForKeyOnChains.fulfilled", action.payload);
-      state.keyinfosChains = action.payload;
-    })
+    builder.addCase(checkForKeyOnChains.rejected, (state, action) => {
+      console.error("checkForKeyOnChains.rejected", action.error);
+    }),
+      builder.addCase(checkForKeyOnChains.fulfilled, (state, action) => {
+        console.log("checkForKeyOnChains.fulfilled", action.payload);
+        state.keyInfoChains = action.payload;
+      })
   },
   selectors: {
     selectVaultToEdit: (state) => state.vaultToEdit,
+    selectKeyInfoChains: (state) => state.keyInfoChains,
   },
 });
 
 export const { setVaultToEdit } = vaultSlice.actions;
 
-export const { selectVaultToEdit } = vaultSlice.selectors;
+export const { selectVaultToEdit, selectKeyInfoChains } = vaultSlice.selectors;
