@@ -64,7 +64,6 @@ function Page() {
         await gnonative.getChainID();
 
         const currentChain = await dispatch(getCurrentChain()).unwrap();
-        console.log('xxxxx', currentChain);
         dispatch(setSelectedChain(currentChain));
 
         setLoading(undefined);

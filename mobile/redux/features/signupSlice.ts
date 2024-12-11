@@ -191,6 +191,11 @@ export const getCurrentChain = createAsyncThunk<NetworkMetainfo | undefined, voi
   const remote = await gnonative.getRemote();
   const combinedChains = selectChainsAvailable(thunkAPI.getState() as RootState);
   const currentChain = combinedChains.find((chain: NetworkMetainfo) => chain.gnoAddress === remote);
+  if (!currentChain) {
+    // chain not fuond can indicate some changed on gnoAddress. So, we need to update the current selection.
+    // TODO: inform the user that the current chain is not available anymore.
+    return undefined;
+  }
   console.log("currentChain", currentChain);
   return currentChain;
 })
@@ -393,7 +398,6 @@ export const signUpSlice = createSlice({
       state.existingAccount = action.payload?.existingAccount;
       state.signUpState = action.payload?.state;
     }).addCase(initSignUpState.fulfilled, (state, action) => {
-      console.log("initSignUpState.fulfilled nnnnnn", action.payload);
       state.phrase = action.payload.phrase;
       state.loading = false;
       state.newAccount = undefined;
