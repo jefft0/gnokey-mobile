@@ -1,5 +1,6 @@
 import { PayloadAction, createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import { GnoNativeApi, KeyInfo } from "@gnolang/gnonative";
+import { createSelector } from 'reselect'
 import { ThunkExtra } from "@/providers/redux-provider";
 import { Alert } from "react-native";
 import { NetworkMetainfo } from "@/types";
@@ -408,7 +409,6 @@ export const signUpSlice = createSlice({
     signUpStateSelector: (state) => state.signUpState,
     newAccountSelector: (state) => state.newAccount,
     existingAccountSelector: (state) => state.existingAccount,
-    selectChainsAvailable: (state) => (state.customChains ? chains.concat(state.customChains) : chains) as NetworkMetainfo[],
     selectRegisterAccount: (state) => state.registerAccount,
     selectKeyName: (state) => state.keyName,
     selectSelectedChain: (state) => state.selectedChain,
@@ -416,10 +416,15 @@ export const signUpSlice = createSlice({
   },
 });
 
+export const selectChainsAvailable = createSelector(
+  (state) => state.customChains,
+  (customChains) => customChains ? chains.concat(customChains) : chains
+);
+
 export const { addProgress, signUpState, clearProgress, addCustomChain, setRegisterAccount, setKeyName,
   setSelectedChain
 } = signUpSlice.actions;
 
 export const { selectLoading, selectProgress, signUpStateSelector, newAccountSelector, existingAccountSelector,
-  selectChainsAvailable, selectRegisterAccount, selectKeyName, selectSelectedChain, selectPhrase
+  selectRegisterAccount, selectKeyName, selectSelectedChain, selectPhrase
 } = signUpSlice.selectors;
