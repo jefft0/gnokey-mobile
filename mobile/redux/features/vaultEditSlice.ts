@@ -1,5 +1,5 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
-import { selectChainsAvailable } from "@/redux";
+import { selectChainsAvailable } from "./signupSlice";
 import { GnoNativeApi, KeyInfo } from "@gnolang/gnonative";
 import { ThunkExtra } from "@/providers/redux-provider";
 import { RootState } from "../root-reducer";
