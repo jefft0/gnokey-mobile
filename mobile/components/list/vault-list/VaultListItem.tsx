@@ -4,18 +4,25 @@ import { KeyInfo } from "@gnolang/gnonative";
 import { TouchableOpacity, View } from "react-native";
 import styled from "styled-components/native";
 import AntDesign from '@expo/vector-icons/AntDesign';
+import Row from "@/components/row";
 
 interface Props {
   vault: KeyInfo;
+  chains?: string[];
   onVaultPress: (vault: KeyInfo) => void;
 }
 
-const VaultListItem = ({ vault, onVaultPress }: Props) => {
+const VaultListItem = ({ vault, onVaultPress, chains = [] }: Props) => {
 
   return (
     <Container onPress={() => onVaultPress(vault)}>
-      <View style={{ flex: 1 }}>
-        <Text.Title>{vault.name}</Text.Title>
+      <View style={{ flex: 1, height: 40 }}>
+        <View style={{ flex: 1 }}>
+          <Text.BodyMedium>{vault.name}</Text.BodyMedium>
+        </View>
+        <View style={{ flex: 1 }}>
+          {chains ? <Text.Caption1 style={{ textAlign: 'left', paddingTop: 4 }}>{chains.join(', ')}</Text.Caption1> : null}
+        </View>
       </View>
       <AntDesign name="edit" size={24} color="black" />
     </Container>

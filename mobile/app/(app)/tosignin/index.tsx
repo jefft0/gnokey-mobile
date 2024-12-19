@@ -3,7 +3,7 @@ import Button from "@/components/button";
 import VaultListItem from "@/components/list/vault-list/VaultListItem";
 import Spacer from "@/components/spacer";
 import Text from "@/components/text";
-import { checkForKeyOnChains, clearLinking, selectCallback, selectClientName, sendAddressToSoliciting, useAppDispatch, useAppSelector } from "@/redux";
+import { clearLinking, selectCallback, selectClientName, sendAddressToSoliciting, useAppDispatch, useAppSelector } from "@/redux";
 import { KeyInfo, useGnoNativeContext } from "@gnolang/gnonative";
 import { router, useNavigation } from "expo-router";
 import { useCallback, useEffect, useState } from "react";
@@ -45,7 +45,6 @@ export default function Page() {
 
     const onCancel = () => {
         dispatch(clearLinking())
-        dispatch(checkForKeyOnChains())
         Linking.openURL(`${callback}?status=cancelled`);
         router.replace("/home")
     }
