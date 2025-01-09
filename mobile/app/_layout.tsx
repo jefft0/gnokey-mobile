@@ -1,8 +1,9 @@
 import { Stack } from "expo-router";
-import { DefaultTheme, ThemeProvider } from "@react-navigation/native";
+import { ThemeProvider } from "@react-navigation/native";
 import { Guard } from "@/components/auth/guard";
 import { GnoNativeProvider } from "@gnolang/gnonative";
 import { LinkingProvider, ReduxProvider } from "@/providers";
+import { DefaultTheme } from "@/assets/styles";
 
 const gnoDefaultConfig = {
   // @ts-ignore
@@ -16,16 +17,16 @@ export default function AppLayout() {
     <GnoNativeProvider config={gnoDefaultConfig}>
       <ReduxProvider>
         <ThemeProvider value={DefaultTheme}>
-        <LinkingProvider>
-          <Guard>
-            <Stack
-              screenOptions={{
-                headerShown: false,
-                headerLargeTitle: true,
-                headerBackVisible: false,
-              }}
-            />
-          </Guard>
+          <LinkingProvider>
+            <Guard>
+              <Stack
+                screenOptions={{
+                  headerShown: false,
+                  headerLargeTitle: true,
+                  headerBackVisible: false,
+                }}
+              />
+            </Guard>
           </LinkingProvider>
         </ThemeProvider>
       </ReduxProvider>
