@@ -30,7 +30,9 @@ const Container = styled.View<Props>`
   flex-direction: row;
   align-items: center;
   border-width: 1px;
-  border-color: ${(props) => (props.error ? "red" : "black")};
+  border-color: ${(props) => (props.error ? "#6b6b6d" : "black")};
+  background-color: #F2F2F2;
+  placeholderTextColor: #8E8E92;
   border-radius: 4px;
   padding: 2px;
   margin: 10px 0;
@@ -42,7 +44,9 @@ const TextInputBase = styled.TextInput.attrs<Props>({
   flex: 1;
   padding: 8px;
   font-size: 16px;
-  color: ${(props) => (props.editable === false ? "gray" : "black")};
+  color: ${(props) => (props.editable === false ? "rgb(85, 85, 85)" : "black")};
+  background-color: #F2F2F2;
+  placeholderTextColor:#8E8E92;
   height: 48px;
   border-width: 0;
 `;

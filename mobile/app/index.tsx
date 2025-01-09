@@ -15,7 +15,7 @@ export default function Root() {
 
   const dispatch = useAppDispatch();
 
-  const appVersion = Application.nativeApplicationVersion;
+  const appVersion = Application.nativeBuildVersion;
 
   const appInitialized = useAppSelector(selectInitialized)
   const hasMasterPassword = useAppSelector(selectMasterPassword)
@@ -73,9 +73,9 @@ export default function Root() {
       <Layout.Container>
         <Layout.BodyAlignedBotton>
           <View style={{ alignItems: "center" }}>
-            <Text.Title>gnoKey Mobile</Text.Title>
-            <Text.Body>Key Management Tool</Text.Body>
-            <Text.Caption1>v{appVersion}</Text.Caption1>
+            <Text.Title>GnoKey Mobile</Text.Title>
+            <Text.Body>The Gno Key Management Tool</Text.Body>
+            <Text.Caption1>Build Version: {appVersion}</Text.Caption1>
           </View>
 
           <ScrollView contentContainerStyle={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}
