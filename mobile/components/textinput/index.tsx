@@ -46,7 +46,7 @@ const TextInputBase = styled.TextInput.attrs<Props>({
   font-size: 16px;
   color: ${(props) => (props.editable === false ? "rgb(85, 85, 85)" : "black")};
   background-color: #F2F2F2;
-  placeholderTextColor:#8E8E92;
+  placeholderTextColor: #727274;
   height: 48px;
   border-width: 0;
 `;
