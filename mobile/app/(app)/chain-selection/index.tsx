@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { getCurrentChain, selectSelectedChain, setSelectedChain, useAppDispatch, useAppSelector } from "@/redux";
-import { Modal, StyleSheet } from "react-native";
+import { KeyboardAvoidingView, Modal, Platform, SafeAreaView, ScrollView, StyleSheet } from "react-native";
 import { useNavigation, useRouter } from "expo-router";
 import { useGnoNativeContext } from "@gnolang/gnonative";
 import { Button, Layout, Ruller, Spacer, ModalContent, ModalHeader, NetworkList, Text, TextInput, Alert } from "@/components";
@@ -103,51 +103,57 @@ function Page() {
         <Button.TouchableOpacity title="Back" onPress={() => router.back()} variant="secondary" />
       </Layout.Body>
       <Modal visible={showCustomChain} animationType="slide">
-        <ModalContent>
-          <ModalHeader title="Add a custom Chain" onClose={() => setShowCustomChain(false)} />
-          <Text.InputLabel>Chain name:</Text.InputLabel>
-          <TextInput
-            placeholder="name"
-            value={chainName}
-            onChangeText={setChainName}
-            keyboardType="default"
-            autoCapitalize="none"
-            autoCorrect={false}
-          />
-          <Text.InputLabel>Chain ID:</Text.InputLabel>
-          <TextInput
-            placeholder="ID"
-            value={chainID}
-            onChangeText={setChainID}
-            keyboardType="default"
-            autoCapitalize="none"
-            autoCorrect={false}
-          />
-          <Text.InputLabel>Chain URL:</Text.InputLabel>
-          <TextInput
-            placeholder="URL"
-            value={chainURL}
-            onChangeText={setChainURL}
-            keyboardType="url"
-            autoCapitalize="none"
-            autoCorrect={false}
-          />
-          <Text.InputLabel>Faucet URL:</Text.InputLabel>
-          <TextInput
-            placeholder="Faucet URL"
-            value={faucetAddress}
-            onChangeText={setFaucetAddress}
-            autoCapitalize="none"
-            keyboardType="url"
-            autoCorrect={false}
-          />
-          <Spacer />
-          {error ? <Alert severity="error" message={error} /> : null}
-          <Button.TouchableOpacity title="Save" onPress={onConfirmCustomChain} variant="primary" />
-          <Ruller />
-          <Button.TouchableOpacity title="Cancel" onPress={onCancelCustomChain} variant="secondary" />
-          <Spacer space={16} />
-        </ModalContent>
+        <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={{ flex: 1 }}>
+          <ModalContent>
+            <SafeAreaView>
+              <ScrollView>
+                <ModalHeader title="Add a custom Chain" onClose={() => setShowCustomChain(false)} />
+                <Text.InputLabel>Chain name:</Text.InputLabel>
+                <TextInput
+                  placeholder="name"
+                  value={chainName}
+                  onChangeText={setChainName}
+                  keyboardType="default"
+                  autoCapitalize="none"
+                  autoCorrect={false}
+                />
+                <Text.InputLabel>Chain ID:</Text.InputLabel>
+                <TextInput
+                  placeholder="ID"
+                  value={chainID}
+                  onChangeText={setChainID}
+                  keyboardType="default"
+                  autoCapitalize="none"
+                  autoCorrect={false}
+                />
+                <Text.InputLabel>Chain URL:</Text.InputLabel>
+                <TextInput
+                  placeholder="URL"
+                  value={chainURL}
+                  onChangeText={setChainURL}
+                  keyboardType="url"
+                  autoCapitalize="none"
+                  autoCorrect={false}
+                />
+                <Text.InputLabel>Faucet URL:</Text.InputLabel>
+                <TextInput
+                  placeholder="Faucet URL"
+                  value={faucetAddress}
+                  onChangeText={setFaucetAddress}
+                  autoCapitalize="none"
+                  keyboardType="url"
+                  autoCorrect={false}
+                />
+                <Spacer />
+                {error ? <Alert severity="error" message={error} /> : null}
+                <Button.TouchableOpacity title="Save" onPress={onConfirmCustomChain} variant="primary" />
+                <Ruller />
+                <Button.TouchableOpacity title="Cancel" onPress={onCancelCustomChain} variant="secondary" />
+                <Spacer space={16} />
+              </ScrollView>
+            </SafeAreaView>
+          </ModalContent>
+        </KeyboardAvoidingView>
       </Modal>
     </Layout.Container>
   );
