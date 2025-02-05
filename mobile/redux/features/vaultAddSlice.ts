@@ -1,14 +1,12 @@
 import { PayloadAction, createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import { GnoNativeApi, KeyInfo } from "@gnolang/gnonative";
-import { createSelector } from 'reselect'
 import { ThunkExtra } from "@/providers/redux-provider";
 import { Alert } from "react-native";
 import { NetworkMetainfo } from "@/types";
 import { Coin } from '@buf/gnolang_gnonative.bufbuild_es/gnonativetypes_pb';
-import chains from '@/assets/chains.json'
 import { RootState } from "../root-reducer";
 
-export enum SignUpState {
+export enum VaultCreationState {
   user_exists_on_blockchain_and_local_storage = 'user_exists_on_blockchain_and_local_storage',
   user_exists_under_differente_key = 'user_exists_under_differente_key',
   user_exists_under_differente_key_local = 'user_exists_under_differente_key_local',
@@ -18,26 +16,24 @@ export enum SignUpState {
   account_created = 'account_created',
 }
 
-export interface SignupState {
-  signUpState?: SignUpState
+export interface VaultAddState {
+  signUpState?: VaultCreationState
   newAccount?: KeyInfo;
   existingAccount?: KeyInfo;
   loading: boolean;
   progress: string[];
-  customChains: NetworkMetainfo[];
   selectedChain?: NetworkMetainfo;
   registerAccount: boolean;
   keyName?: string;
   phrase?: string;
 }
 
-const initialState: SignupState = {
+const initialState: VaultAddState = {
   signUpState: undefined,
   newAccount: undefined,
   existingAccount: undefined,
   loading: false,
   progress: [],
-  customChains: [],
   selectedChain: undefined,
   registerAccount: false,
 };
@@ -48,7 +44,7 @@ interface SignUpParam {
   phrase: string;
 }
 
-type SignUpResponse = { newAccount?: KeyInfo, existingAccount?: KeyInfo, state: SignUpState };
+type SignUpResponse = { newAccount?: KeyInfo, existingAccount?: KeyInfo, state: VaultCreationState };
 
 /**
  * This thunk checks if the user is already registered on the blockchain and/or local storage.
@@ -65,19 +61,22 @@ type SignUpResponse = { newAccount?: KeyInfo, existingAccount?: KeyInfo, state: 
  *
  * ref: https://github.com/gnolang/dsocial/issues/72
  */
-export const signUp = createAsyncThunk<SignUpResponse, SignUpParam, ThunkExtra>("user/signUp", async (param, thunkAPI) => {
+export const addVault = createAsyncThunk<SignUpResponse, SignUpParam, ThunkExtra>("user/signUp", async (param, thunkAPI) => {
 
   const { name, password, phrase } = param;
-  const { registerAccount, selectedChain } = (thunkAPI.getState() as RootState).signUp;
+  const { registerAccount, selectedChain } = (thunkAPI.getState() as RootState).vaultAdd;
 
   const gnonative = thunkAPI.extra.gnonative as GnoNativeApi;
 
-  if (!selectedChain) {
-    throw new Error("No chain selected");
+  console.log("selectedChain in signUp", selectedChain);
+
+  if (selectedChain) {
+    await gnonative.setRemote(selectedChain.gnoAddress);
+    await gnonative.setChainID(selectedChain.chainId);
   }
 
   // do not register on chain
-  if (!registerAccount) {
+  if (!selectedChain) {
 
     thunkAPI.dispatch(addProgress(`checking if "${name}" is already on local storage`))
     const userOnLocalStorage = await checkForUserOnLocalStorage(gnonative, name);
@@ -86,7 +85,7 @@ export const signUp = createAsyncThunk<SignUpResponse, SignUpParam, ThunkExtra>(
     if (userOnLocalStorage) {
       thunkAPI.dispatch(addProgress(`SignUpState.user_exists_under_differente_key_local`))
       // CASE 1.1: Bad case. Choose new name. (Delete name in keystore?)
-      return { newAccount: undefined, state: SignUpState.user_exists_under_differente_key_local }
+      return { newAccount: undefined, state: VaultCreationState.user_exists_under_differente_key_local }
     }
 
     thunkAPI.dispatch(addProgress(`registerAccount is false`))
@@ -102,7 +101,7 @@ export const signUp = createAsyncThunk<SignUpResponse, SignUpParam, ThunkExtra>(
     await gnonative.setPassword(password, newAccount.address);
 
     thunkAPI.dispatch(addProgress(`SignUpState.account_created`))
-    return { newAccount, state: SignUpState.account_created };
+    return { newAccount, state: VaultCreationState.account_created };
   }
 
   thunkAPI.dispatch(addProgress(`checking if "${name}" is already registered on the blockchain.`))
@@ -121,19 +120,19 @@ export const signUp = createAsyncThunk<SignUpResponse, SignUpParam, ThunkExtra>(
       if (blockchainUser.address == localAddress) {
         thunkAPI.dispatch(addProgress(`CASE 1.0 SignUpState.user_exists_on_blockchain_and_local_storage`))
         // CASE 1.0: Offer to do normal signin, or choose new name
-        return { newAccount: undefined, state: SignUpState.user_exists_on_blockchain_and_local_storage }
+        return { newAccount: undefined, state: VaultCreationState.user_exists_on_blockchain_and_local_storage }
 
       }
       else {
         thunkAPI.dispatch(addProgress(`SignUpState.user_exists_under_differente_key`))
         // CASE 1.1: Bad case. Choose new name. (Delete name in keystore?)
-        return { newAccount: undefined, state: SignUpState.user_exists_under_differente_key }
+        return { newAccount: undefined, state: VaultCreationState.user_exists_under_differente_key }
       }
     }
     else {
       thunkAPI.dispatch(addProgress(`SignUpState.user_exists_only_on_local_storage`))
       // CASE 1.2: Offer to onboard existing account, replace it, or choose new name
-      return { newAccount: undefined, state: SignUpState.user_exists_only_on_local_storage, existingAccount: userOnLocalStorage }
+      return { newAccount: undefined, state: VaultCreationState.user_exists_only_on_local_storage, existingAccount: userOnLocalStorage }
     }
   } else {
     if (blockchainUser) {
@@ -165,14 +164,14 @@ export const signUp = createAsyncThunk<SignUpResponse, SignUpParam, ThunkExtra>(
     }
 
     thunkAPI.dispatch(addProgress(`SignUpState.account_created`))
-    return { newAccount, state: SignUpState.account_created };
+    return { newAccount, state: VaultCreationState.account_created };
   }
 })
 
 export const onboarding = createAsyncThunk<SignUpResponse, { account: KeyInfo }, ThunkExtra>("user/onboarding", async (param, thunkAPI) => {
   thunkAPI.dispatch(addProgress(`onboarding "${param.account.name}"`))
 
-  const { selectedChain } = (thunkAPI.getState() as RootState).signUp;
+  const { selectedChain } = (thunkAPI.getState() as RootState).vaultAdd;
 
   if (!selectedChain) {
     throw new Error("No chain selected");
@@ -183,28 +182,13 @@ export const onboarding = createAsyncThunk<SignUpResponse, { account: KeyInfo },
   await onboard(gnonative, account, selectedChain.faucetAddress);
 
   thunkAPI.dispatch(addProgress(`SignUpState.account_created`))
-  return { newAccount: account, state: SignUpState.account_created };
+  return { newAccount: account, state: VaultCreationState.account_created };
 })
 
-export const getCurrentChain = createAsyncThunk<NetworkMetainfo | undefined, void, ThunkExtra>("user/getCurrentChain", async (_, thunkAPI) => {
-  const gnonative = thunkAPI.extra.gnonative as GnoNativeApi;
-  const remote = await gnonative.getRemote();
-  const combinedChains = selectChainsAvailable(thunkAPI.getState() as RootState);
-  const currentChain = combinedChains.find((chain: NetworkMetainfo) => chain.gnoAddress === remote);
-  if (!currentChain) {
-    // chain not fuond can indicate some changed on gnoAddress. So, we need to update the current selection.
-    // TODO: inform the user that the current chain is not available anymore.
-    return undefined;
-  }
-  console.log("currentChain", currentChain);
-  return currentChain;
-})
-
-export const initSignUpState = createAsyncThunk<{ phrase: string }, void, ThunkExtra>("user/initSignUpState", async (_, thunkAPI) => {
+export const generateNewPhrase = createAsyncThunk<{ phrase: string }, void, ThunkExtra>("user/generateNewPhrase", async (_, thunkAPI) => {
 
   let newPhrase = "";
   try {
-    await thunkAPI.dispatch(getCurrentChain()).unwrap(); // to force update on redux store
     newPhrase = await (thunkAPI.extra.gnonative as GnoNativeApi).generateRecoveryPhrase()
   } catch (error) {
     console.error("error on qEval", error);
@@ -223,17 +207,17 @@ const checkForUserOnLocalStorage = async (gnonative: GnoNativeApi, name: string)
   return userOnLocalStorage
 }
 
-const checkForUserOnBlockchain = async (gnonative: GnoNativeApi, name: string, phrase: string): Promise<{ address: string, state: SignUpState } | undefined> => {
+const checkForUserOnBlockchain = async (gnonative: GnoNativeApi, name: string, phrase: string): Promise<{ address: string, state: VaultCreationState } | undefined> => {
   let addressByName: string | undefined = undefined;
-  const byNameStr = await gnonative.qEval("gno.land/r/demo/users", `GetUserByName("${name}")`);
+  const byNameStr = await gnonative.qEval("gno.land/r/sys/users", `ResolveName("${name}")`);
   if (!byNameStr.startsWith("(nil")) {
-    const addressByNameStr = await gnonative.qEval("gno.land/r/demo/users", `GetUserByName("${name}").Address.String()`);
+    const addressByNameStr = await gnonative.qEval("gno.land/r/sys/users", `ResolveName("${name}")`);
     addressByName = convertToJson(addressByNameStr);
   }
 
   if (addressByName) {
     console.log("user %s already exists on the blockchain under the same name", name);
-    return { address: addressByName, state: SignUpState.user_already_exists_on_blockchain };
+    return { address: addressByName, state: VaultCreationState.user_already_exists_on_blockchain };
   }
 
   try {
@@ -241,14 +225,14 @@ const checkForUserOnBlockchain = async (gnonative: GnoNativeApi, name: string, p
     const addressBech32 = await gnonative.addressToBech32(address);
     console.log("addressBech32", addressBech32);
 
-    const accountNameStr = await gnonative.qEval("gno.land/r/demo/users", `GetUserByAddress("${addressBech32}").Name`);
+    const accountNameStr = await gnonative.qEval("gno.land/r/sys/users", `ResolveAddress("${addressBech32}")`);
     console.log("GetUserByAddress result:", accountNameStr);
     const accountName = accountNameStr.match(/\("(\w+)"/)?.[1];
     console.log("GetUserByAddress after regex", accountName);
 
     if (accountName) {
       console.log("user KEY already exists on the blockchain under name %s", accountName);
-      return { address: addressBech32, state: SignUpState.user_already_exists_on_blockchain_under_different_name };
+      return { address: addressBech32, state: VaultCreationState.user_already_exists_on_blockchain_under_different_name };
     }
 
   } catch (error) {
@@ -260,13 +244,11 @@ const checkForUserOnBlockchain = async (gnonative: GnoNativeApi, name: string, p
 }
 
 function convertToJson(result: string | undefined) {
-  if (result === '("" string)') return undefined;
+  if (!result || result === '("" string)') return undefined;
 
-  if (!result || !(result.startsWith("(") && result.endsWith(" string)"))) throw new Error("Malformed GetThreadPosts response");
-  const quoted = result.substring(1, result.length - " string)".length);
-  const json = JSON.parse(quoted);
-
-  return json;
+  const userData = result.match(/\("(\w+)" std\.Address/)?.[1];
+  if (!userData) throw new Error("Malformed response");
+  return userData
 }
 
 const onboard = async (gnonative: GnoNativeApi, account: KeyInfo, faucetRemote?: string) => {
@@ -301,9 +283,9 @@ const registerAccount = async (gnonative: GnoNativeApi, account: KeyInfo) => {
   try {
     const gasFee = "10000000ugnot";
     const gasWanted = BigInt(20000000);
-    const send = [new Coin({ denom: "ugnot", amount: BigInt(200000000) })];
-    const args: Array<string> = ["", account.name, "Profile description"];
-    for await (const response of await gnonative.call("gno.land/r/demo/users", "Register", args, gasFee, gasWanted, account.address, send)) {
+    const send = [new Coin({ denom: "ugnot", amount: BigInt(1000000) })];
+    const args: Array<string> = [account.name];
+    for await (const response of await gnonative.call("gno.land/r/gnoland/users/v1", "Register", args, gasFee, gasWanted, account.address, send)) {
       console.log("response: ", JSON.stringify(response));
     }
   } catch (error) {
@@ -356,11 +338,11 @@ const sendCoins = async (address: string, faucetRemote: string) => {
   return fetch(faucetRemote, requestOptions);
 };
 
-export const signUpSlice = createSlice({
-  name: "signUp",
+export const vaultAddSlice = createSlice({
+  name: "vaultAdd",
   initialState,
   reducers: {
-    signUpState: (state, action: PayloadAction<SignUpState>) => {
+    signUpState: (state, action: PayloadAction<VaultCreationState>) => {
       state.signUpState = action.payload
     },
     addProgress: (state, action: PayloadAction<string>) => {
@@ -370,9 +352,6 @@ export const signUpSlice = createSlice({
     clearProgress: (state) => {
       state.progress = [];
     },
-    addCustomChain: (state, action: PayloadAction<NetworkMetainfo>) => {
-      state.customChains = state.customChains ? [...state.customChains, action.payload] : [action.payload];
-    },
     setRegisterAccount: (state, action: PayloadAction<boolean>) => {
       state.registerAccount = action.payload;
     },
@@ -381,13 +360,21 @@ export const signUpSlice = createSlice({
     },
     setSelectedChain: (state, action: PayloadAction<NetworkMetainfo | undefined>) => {
       state.selectedChain = action.payload
+    },
+    resetState: (state) => {
+      state.loading = false;
+      state.newAccount = undefined;
+      state.existingAccount = undefined;
+      state.signUpState = undefined;
+      state.selectedChain = undefined;
+      state.keyName = "";
     }
   },
   extraReducers(builder) {
-    builder.addCase(signUp.rejected, (state, action) => {
+    builder.addCase(addVault.rejected, (state, action) => {
       action.error.message ? state.progress = [...state.progress, action.error.message] : null;
       console.error("signUp.rejected", action);
-    }).addCase(signUp.fulfilled, (state, action) => {
+    }).addCase(addVault.fulfilled, (state, action) => {
       state.loading = false;
       state.newAccount = action.payload?.newAccount;
       state.existingAccount = action.payload?.existingAccount;
@@ -397,15 +384,8 @@ export const signUpSlice = createSlice({
       state.newAccount = action.payload?.newAccount;
       state.existingAccount = action.payload?.existingAccount;
       state.signUpState = action.payload?.state;
-    }).addCase(initSignUpState.fulfilled, (state, action) => {
+    }).addCase(generateNewPhrase.fulfilled, (state, action) => {
       state.phrase = action.payload.phrase;
-      state.loading = false;
-      state.newAccount = undefined;
-      state.existingAccount = undefined;
-      state.signUpState = undefined;
-      state.keyName = "";
-    }).addCase(getCurrentChain.fulfilled, (state, action) => {
-      state.selectedChain = action.payload;
     })
   },
 
@@ -422,15 +402,12 @@ export const signUpSlice = createSlice({
   },
 });
 
-export const selectChainsAvailable = createSelector(
-  (state: RootState) => state.signUp.customChains,
-  (customChains) => customChains ? chains.concat(customChains) : chains
-);
 
-export const { addProgress, signUpState, clearProgress, addCustomChain, setRegisterAccount, setKeyName,
-  setSelectedChain
-} = signUpSlice.actions;
+
+export const { addProgress, signUpState, clearProgress, setRegisterAccount, setKeyName,
+  setSelectedChain, resetState
+} = vaultAddSlice.actions;
 
 export const { selectLoading, selectProgress, signUpStateSelector, newAccountSelector, existingAccountSelector,
   selectRegisterAccount, selectKeyName, selectSelectedChain, selectPhrase
-} = signUpSlice.selectors;
+} = vaultAddSlice.selectors;
