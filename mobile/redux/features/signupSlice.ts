@@ -225,9 +225,9 @@ const checkForUserOnLocalStorage = async (gnonative: GnoNativeApi, name: string)
 
 const checkForUserOnBlockchain = async (gnonative: GnoNativeApi, name: string, phrase: string): Promise<{ address: string, state: SignUpState } | undefined> => {
   let addressByName: string | undefined = undefined;
-  const byNameStr = await gnonative.qEval("gno.land/r/demo/users", `GetUserByName("${name}")`);
+  const byNameStr = await gnonative.qEval("gno.land/r/sys/users", `ResolveName("${name}")`);
   if (!byNameStr.startsWith("(nil")) {
-    const addressByNameStr = await gnonative.qEval("gno.land/r/demo/users", `GetUserByName("${name}").Address.String()`);
+    const addressByNameStr = await gnonative.qEval("gno.land/r/sys/users", `ResolveName("${name}")`);
     addressByName = convertToJson(addressByNameStr);
   }
 
@@ -241,7 +241,7 @@ const checkForUserOnBlockchain = async (gnonative: GnoNativeApi, name: string, p
     const addressBech32 = await gnonative.addressToBech32(address);
     console.log("addressBech32", addressBech32);
 
-    const accountNameStr = await gnonative.qEval("gno.land/r/demo/users", `GetUserByAddress("${addressBech32}").Name`);
+    const accountNameStr = await gnonative.qEval("gno.land/r/sys/users", `ResolveAddress("${addressBech32}")`);
     console.log("GetUserByAddress result:", accountNameStr);
     const accountName = accountNameStr.match(/\("(\w+)"/)?.[1];
     console.log("GetUserByAddress after regex", accountName);
@@ -260,13 +260,13 @@ const checkForUserOnBlockchain = async (gnonative: GnoNativeApi, name: string, p
 }
 
 function convertToJson(result: string | undefined) {
-  if (result === '("" string)') return undefined;
+  if (!result || result === '("" string)') return undefined;
 
-  if (!result || !(result.startsWith("(") && result.endsWith(" string)"))) throw new Error("Malformed GetThreadPosts response");
-  const quoted = result.substring(1, result.length - " string)".length);
-  const json = JSON.parse(quoted);
+  const userData = result.match(/\("(\w+)" std\.Address/)?.[1];
 
-  return json;
+  if (!userData) throw new Error("Malformed response");
+
+  return userData
 }
 
 const onboard = async (gnonative: GnoNativeApi, account: KeyInfo, faucetRemote?: string) => {
@@ -301,9 +301,9 @@ const registerAccount = async (gnonative: GnoNativeApi, account: KeyInfo) => {
   try {
     const gasFee = "10000000ugnot";
     const gasWanted = BigInt(20000000);
-    const send = [new Coin({ denom: "ugnot", amount: BigInt(200000000) })];
-    const args: Array<string> = ["", account.name, "Profile description"];
-    for await (const response of await gnonative.call("gno.land/r/demo/users", "Register", args, gasFee, gasWanted, account.address, send)) {
+    const send = [new Coin({ denom: "ugnot", amount: BigInt(1000000) })];
+    const args: Array<string> = [account.name];
+    for await (const response of await gnonative.call("gno.land/r/gnoland/users/v1", "Register", args, gasFee, gasWanted, account.address, send)) {
       console.log("response: ", JSON.stringify(response));
     }
   } catch (error) {

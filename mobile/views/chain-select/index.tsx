@@ -19,7 +19,7 @@ const ChainSelectView = () => {
     return (
         <View style={{ borderColor: 'black', borderWidth: 1, borderRadius: 4 }}>
             <MenuToggle isToggleOn={isChecked} onPress={() => dispatch(setRegisterAccount(!isChecked))} >
-                Register on `r/demo/users` realm:
+                Register on `r/gnoland/users/v1` realm:
             </MenuToggle>
             <Ruller />
             {currentNetwork ?
