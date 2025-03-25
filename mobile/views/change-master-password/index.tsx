@@ -11,7 +11,6 @@ import Text from "@/components/text";
 import TextInput from "@/components/textinput";
 import Button from "@/components/button";
 import { selectMasterPassword, useAppSelector, useAppDispatch, changeMasterPassword } from "@/redux";
-import { useTheme } from "styled-components/native";
 import { Alert, Spacer } from "@/modules/ui-components";
 import { ModalHeaderTitle } from "@/components/modal/ModalHeader";
 
@@ -31,8 +30,6 @@ const ChangeMasterPassword = ({ visible, onClose }: Props) => {
   const dispatch = useAppDispatch();
 
   const inputRef = useRef<RNTextInput>(null);
-
-  const theme = useTheme();
 
   useEffect(() => {
     if (visible) {
@@ -109,6 +106,7 @@ const ChangeMasterPassword = ({ visible, onClose }: Props) => {
                 />
                 <Alert severity="error" message={error} />
                 <Button.TouchableOpacity title="Confirm" onPress={onConfirm} variant="primary" loading={loadingMasterPassword} />
+                <Button.TouchableOpacity title="Cancel" onPress={()=> onClose(false)} variant="secondary" loading={loadingMasterPassword} />
               </View>
             </View>
           </TouchableWithoutFeedback>

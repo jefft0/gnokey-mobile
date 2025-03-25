@@ -35,6 +35,7 @@ const persistConfig = {
 
 let persistor:Persistor
 
+// TODO: serialize the Uint8Array
 const persistedReducer = persistReducer(persistConfig, rootReducer)
 
 const ReduxProvider: React.FC<Props> = ({ children }) => {
