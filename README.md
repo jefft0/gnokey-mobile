@@ -63,7 +63,7 @@ land.gno.gnokey://tosign?tx=%7B%22msg%22%3A%5B%7B%22%40type%22%3A%22%2Fvm.m_call
   - reason: the reason behind this action. It will be displayed to the user (if no session).
   - callback: the URL that Gnokey Mobile will call after signing the tx.
   - want_session: boolean, if true and no session then create and return a new session key
-  - session (optional): the session key json from the call to `newsession`. If present, sign immediately and return
+  - session (optional): the session key json from the previous call with want_session true. If present, sign immediately and return
 
 Example response:
 
