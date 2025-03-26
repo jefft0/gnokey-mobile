@@ -9,7 +9,8 @@
     "ios:release": "npx expo run:ios --configuration Release",
     "web": "expo start --web",
     "prebuild": "expo prebuild",
-    "ts:check": "tsc"
+    "ts:check": "tsc",
+    "test": "vitest"
   },
   "dependencies": {
     "@bufbuild/protobuf": "^1.6.0",
@@ -57,7 +58,8 @@
   "devDependencies": {
     "@babel/core": "^7.20.0",
     "@types/react": "~18.2.79",
-    "typescript": "~5.3.3"
+    "typescript": "~5.3.3",
+    "vitest": "^3.0.9"
   },
   "overrides": {
     "react-refresh": "~0.14.0"

@@ -1,6 +1,6 @@
 import { View } from "react-native";
 import React from "react";
-import { selectSelectedChain, setSelectedChain, useAppDispatch, useAppSelector } from "@/redux"
+import { addCustomChain, selectSelectedChain, setSelectedChain, useAppDispatch, useAppSelector } from "@/redux"
 import { Spacer, Text } from "@/modules/ui-components";
 import { NetworkMetainfo } from "@/types";
 import { useTheme } from "styled-components";
@@ -34,8 +34,11 @@ export const ChainSelectView = () => {
     setShowChainAdd(false)
   }
 
-  const onSaveChain = (form: Form) => {
-    console.log('Save Chain', form)
+  const onSaveChain = async (form: Form) => {
+    console.log('Saving Chain', form)
+    dispatch(addCustomChain(form))
+    setShowChainAdd(false)
+    setShowModalChain(true)
   }
 
   return (

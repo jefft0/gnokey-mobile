@@ -95,7 +95,7 @@ export default function Page() {
       }
       if (signUpState === VaultCreationState.account_created && newAccount) {
         dispatch(resetState());
-        router.replace({ pathname: "home/vault-sucess-modal" });
+        router.replace({ pathname: "home/vault-add-sucess-modal" });
       }
     })();
   }, [signUpState, newAccount]);
@@ -170,6 +170,7 @@ export default function Page() {
             onChangeText={x => dispatch(setKeyName(x))}
             autoCapitalize="none"
             autoCorrect={false}
+            autoComplete="off"
             error={error}
           />
           <Spacer space={4} />

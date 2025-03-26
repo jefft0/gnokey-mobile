@@ -8,9 +8,9 @@ import { isEmpty, isInvalidURL } from "@/modules/validation"
 
 export interface Form {
   chainName: string
-  chainID: string
-  chainURL: string
-  faucetURL: string
+  chainId: string
+  gnoAddress: string
+  faucetAddress: string
 }
 
 export interface Props {
@@ -23,9 +23,9 @@ export const ChainAddModal = ({ visible, onCancel, onSaveChain }: Props) => {
 
   const initialForm: Form = {
     chainName: '',
-    chainID: '',
-    chainURL: '',
-    faucetURL: '',
+    chainId: '',
+    gnoAddress: '',
+    faucetAddress: '',
   }
 
   const [form, setForm] = React.useState<Form>(initialForm)
@@ -42,23 +42,23 @@ export const ChainAddModal = ({ visible, onCancel, onSaveChain }: Props) => {
     validateForm(form)
   }, [form])
 
-  const validateForm = (form: any) => {
+  const validateForm = (form: Form) => {
     let errors: Form = {
       chainName: '',
-      chainID: '',
-      chainURL: '',
-      faucetURL: ''
+      chainId: '',
+      gnoAddress: '',
+      faucetAddress: ''
     }
 
     errors.chainName = validate([
       { condition: () => isEmpty(form.chainName), message: 'Chain Name is required' },
     ])
-    errors.chainID = validate([
-      { condition: () => isEmpty(form.chainID), message: 'Chain ID is required' },
+    errors.chainId = validate([
+      { condition: () => isEmpty(form.chainId), message: 'Chain ID is required' },
     ])
-    errors.chainURL = validate([
-      { condition: () => isEmpty(form.chainURL), message: 'Chain URL is required' },
-      { condition: () => isInvalidURL(form.chainURL), message: 'Chain URL must be a validURL' },
+    errors.gnoAddress = validate([
+      { condition: () => isEmpty(form.gnoAddress), message: 'Chain URL is required' },
+      { condition: () => isInvalidURL(form.gnoAddress), message: 'Chain URL must be a validURL' },
     ])
 
     setErrors(errors)
@@ -93,23 +93,31 @@ export const ChainAddModal = ({ visible, onCancel, onSaveChain }: Props) => {
             value={form.chainName}
             onChangeText={(text) => setForm({ ...form, chainName: text })}
             error={errors.chainName}
+            autoComplete="off"
+            autoCapitalize="none"
+            autoCorrect={false}
             color="secondary" />
           <TextField label="Chain ID" placeholder="Chain ID"
-            value={form.chainID}
-            onChangeText={(text) => setForm({ ...form, chainID: text })}
-            error={errors.chainID}
+            value={form.chainId}
+            onChangeText={(text) => setForm({ ...form, chainId: text })}
+            autoComplete="off"
+            autoCapitalize="none"
+            autoCorrect={false}
+            error={errors.chainId}
             color="secondary" />
           <TextField label="Chain URL" placeholder="Chain URL"
-            value={form.chainURL}
-            onChangeText={(text) => setForm({ ...form, chainURL: text })}
-            error={errors.chainURL}
+            value={form.gnoAddress}
+            onChangeText={(text) => setForm({ ...form, gnoAddress: text })}
+            error={errors.gnoAddress}
+            autoComplete="off"
             autoCapitalize="none"
             autoCorrect={false}
             color="secondary" />
           <TextField label="Faucet URL" placeholder="Faucet URL"
-            value={form.faucetURL}
-            onChangeText={(text) => setForm({ ...form, faucetURL: text })}
-            error={errors.faucetURL}
+            value={form.faucetAddress}
+            onChangeText={(text) => setForm({ ...form, faucetAddress: text })}
+            error={errors.faucetAddress}
+            autoComplete="off"
             autoCapitalize="none"
             autoCorrect={false}
             color="secondary" />
