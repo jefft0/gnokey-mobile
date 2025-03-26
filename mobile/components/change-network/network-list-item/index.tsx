@@ -1,44 +1,50 @@
-import styled from 'styled-components/native';
+import styled, { useTheme } from 'styled-components/native';
 import { colors } from '@/assets';
-import { NetworkMetainfo } from '@/types';
-import Text from '@/components/text';
 import Icons from '@/components/icons';
+import * as Text from '../../../modules/ui-components/src/text';
+import { View } from 'react-native';
 
 export interface Props {
   disabled?: boolean;
-  currentRemote: string | undefined;
-  networkMetainfo: NetworkMetainfo;
-  onPress: (item: NetworkMetainfo) => void;
+  title: string;
+  address?: string;
+  faucet?: string;
+  inUse?: boolean;
+  onPress: () => void;
 }
 
-const NetworkListItem: React.FC<Props> = ({ networkMetainfo, currentRemote, onPress, disabled }: Props) => (
-  <Row style={{margin: 4 }} disabled={disabled} onPress={() => disabled ? null : onPress(networkMetainfo)}>
-    <LeftItens>
-      <Text.BodyMedium style={{ color: colors.white }}>{networkMetainfo.chainName}</Text.BodyMedium>
-      <Text.Caption1 style={{ color: colors.white }}>Address: {networkMetainfo.gnoAddress}</Text.Caption1>
-      <Text.Caption1 style={{ color: colors.white }}>Faucet:   {networkMetainfo.faucetAddress}</Text.Caption1>
-    </LeftItens>
-    <RightItens>{currentRemote && networkMetainfo.gnoAddress.includes(currentRemote) && <InUse />}</RightItens>
-  </Row>
-);
+const NetworkListItem: React.FC<Props> = ({ title, address, faucet, inUse, onPress, disabled }: Props) => {
+
+  const theme = useTheme()
+
+  return (
+    <Row disabled={disabled} onPress={() => disabled ? null : onPress()}>
+      <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+        <Text.H3>{title}</Text.H3>
+        <RightItens>{inUse && <InUse />}</RightItens>
+      </View>
+      <LeftItens>
+        {address && <Text.Caption style={{ color: theme.colors.gray }}>Address: {address}</Text.Caption>}
+        {faucet && <Text.Caption style={{ color: theme.colors.gray }}>Faucet:   {faucet}</Text.Caption>}
+      </LeftItens>
+    </Row>
+  )
+}
 
 const InUse = () => (
   <>
     <Icons.CheckMark color={colors.white} />
-    <Text.Caption1 style={{ paddingLeft: 8, color: colors.white }}>in use</Text.Caption1>
+    <Text.Caption style={{ paddingLeft: 8 }}>in use</Text.Caption>
   </>
 );
 
 const Row = styled.TouchableOpacity<{ disabled?: boolean; }>`
   display: flex;
-  flex-direction: row;
+  flex-direction: column;
   justify-content: space-between;
-  align-items: center;
-  background: ${props => props.disabled ? colors.button.primaryDisabled : colors.button.primary};
   height: auto;
-  padding: 9px 16px;
-  border-radius: 18px;
   transition: 0.2s;
+  margin: 8px 0;
 `;
 
 const LeftItens = styled.View`

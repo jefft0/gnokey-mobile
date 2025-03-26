@@ -1,9 +1,9 @@
 import React from "react";
 import { Provider } from "react-redux";
 import { configureStore } from "@reduxjs/toolkit";
-import { vaultSlice, signinSlice, linkingSlice } from "@/redux/features";
+import { vaultEditSlice, signinSlice, linkingSlice } from "@/redux/features";
 import { GnoNativeApi, useGnoNativeContext } from "@gnolang/gnonative";
-import { signUpSlice } from "@/redux/features/signupSlice";
+import { vaultAddSlice } from "@/redux/features/vaultAddSlice";
 import {
   persistStore,
   persistReducer,
@@ -13,6 +13,7 @@ import {
   PERSIST,
   PURGE,
   REGISTER,
+  Persistor,
 } from 'redux-persist'
 import { PersistGate } from 'redux-persist/integration/react'
 import rootReducer from "@/redux/root-reducer";
@@ -27,11 +28,14 @@ export interface ThunkExtra {
 }
 
 const persistConfig = {
-  key: 'root',
-  version: 1,
+  key: 'root-8',
+  version: 4,
   storage: AsyncStorage,
 }
 
+let persistor:Persistor
+
+// TODO: serialize the Uint8Array
 const persistedReducer = persistReducer(persistConfig, rootReducer)
 
 const ReduxProvider: React.FC<Props> = ({ children }) => {
@@ -53,7 +57,7 @@ const ReduxProvider: React.FC<Props> = ({ children }) => {
       }),
   })
 
-  let persistor = persistStore(store)
+  persistor = persistStore(store)
 
   return <Provider store={store}>
     <PersistGate loading={null} persistor={persistor}>
@@ -62,4 +66,4 @@ const ReduxProvider: React.FC<Props> = ({ children }) => {
   </Provider>;
 };
 
-export { ReduxProvider };
+export { ReduxProvider, persistor };

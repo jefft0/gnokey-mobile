@@ -45,6 +45,7 @@ export const sendAddressToSoliciting = createAsyncThunk<void, { keyInfo: KeyInfo
     throw new Error("No callback found.");
   }
 
+  const temp = await gnonative.addressToBech32(keyInfo?.address)
   const bech32 = await gnonative.addressToBech32(keyInfo?.address);
 
   Linking.openURL(callback + '?address=' + bech32 + '&cachekill=' + new Date().getTime());
@@ -152,12 +153,10 @@ export const linkingSlice = createSlice({
     selectRemote: (state) => state.remote,
     selectTxInput: (state) => state.txInput,
     selectCallback: (state) => state.callback,
-    selectPath: (state) => state.path,
     selectBech32Address: (state) => state.bech32Address,
     selectClientName: (state) => state.clientName,
     selectKeyInfo: (state) => state.keyinfo,
     reasonSelector: (state) => state.reason,
-    isToSignInSelector: (state) => state.hostname === 'tosignin',
     selectAction: (state) => state.hostname !== expo_default ? state.hostname : undefined,
   },
 });
@@ -167,6 +166,6 @@ const expo_default = 'expo-development-client';
 
 export const { clearLinking } = linkingSlice.actions;
 
-export const { selectTxInput, selectCallback, selectPath, selectBech32Address, selectClientName, reasonSelector, selectKeyInfo, isToSignInSelector, selectAction,
-  selectChainId, selectRemote
+export const { selectTxInput, selectCallback, selectBech32Address, selectClientName,
+  reasonSelector, selectKeyInfo, selectAction, selectChainId, selectRemote
  } = linkingSlice.selectors;
