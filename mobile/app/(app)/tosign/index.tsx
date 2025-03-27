@@ -63,16 +63,23 @@ export default function Page() {
 
         try {
 
-        let session;
-        if (sessionWanted) {
-          session = await dispatch(newSessionKey({ keyInfo })).unwrap() as SessionKeyInfo
+        let sessionToReturn;
+        if (session) {
+          // TODO: const storedSession = Look up session.key in sessionKeys. 
+          //   if storedSession.exires_at > new Date(), set return status to "session expired"
+        }
+        else {
+          if (sessionWanted) {
+            sessionToReturn = await dispatch(newSessionKey({ keyInfo })).unwrap() as SessionKeyInfo
+          }
+          // else TODO: ask again for approval (like when there are no account sessions)
         }
 
         const signedTx = await dispatch(signTx({ keyInfo })).unwrap();
 
         const path = new URL(callback);
         path.searchParams.append('tx', signedTx.signedTxJson);
-        session && path.searchParams.append('session', JSON.stringify({key: session.key, expires_at: session.expires_at.toISOString()}));
+        sessionToReturn && path.searchParams.append('session', JSON.stringify({key: sessionToReturn.key, expires_at: sessionToReturn.expires_at.toISOString()}));
 
         Linking.openURL(path.toString());
 
