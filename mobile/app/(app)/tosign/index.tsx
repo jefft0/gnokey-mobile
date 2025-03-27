@@ -66,7 +66,7 @@ export default function Page() {
         let sessionToReturn;
         if (session) {
           // TODO: const storedSession = Look up session.key in sessionKeys. 
-          //   if storedSession.exires_at > new Date(), set return status to "session expired"
+          //   if storedSession.exires_at > new Date(), throw new Error('session expired')
         }
         else {
           if (sessionWanted) {
@@ -79,6 +79,7 @@ export default function Page() {
 
         const path = new URL(callback);
         path.searchParams.append('tx', signedTx.signedTxJson);
+        path.searchParams.append('status', 'success');
         sessionToReturn && path.searchParams.append('session', JSON.stringify({key: sessionToReturn.key, expires_at: sessionToReturn.expires_at.toISOString()}));
 
         Linking.openURL(path.toString());
@@ -87,6 +88,9 @@ export default function Page() {
         console.log("return URL " + path.toString())
       } catch (error) {
         console.error("Error signing the tx", error);
+        const path = new URL(callback);
+        path.searchParams.append('status', '' + error);
+        Linking.openURL(path.toString());
       }
     }
 
