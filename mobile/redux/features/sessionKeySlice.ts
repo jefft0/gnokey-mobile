@@ -22,7 +22,8 @@ export const newSessionKey = createAsyncThunk<SessionKeyInfo, { keyInfo: KeyInfo
   // TODO: implement the actual session key generation
   const key = new Date().getTime().toString();
 
-  return { expires_at: new Date(), keyInfo, key };
+  const validityMinutes = 10;
+  return { expires_at: new Date(new Date().getTime() + validityMinutes * 60 * 1000), keyInfo, key };
 })
 
 export const sessionKeySlice = createSlice({
