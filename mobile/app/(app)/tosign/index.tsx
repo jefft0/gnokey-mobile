@@ -72,7 +72,7 @@ export default function Page() {
 
         const path = new URL(callback);
         path.searchParams.append('tx', signedTx.signedTxJson);
-        session && path.searchParams.append('session', session.key);
+        session && path.searchParams.append('session', JSON.stringify({key: session.key, expires_at: session.expires_at.toISOString()}));
 
         Linking.openURL(path.toString());
 
