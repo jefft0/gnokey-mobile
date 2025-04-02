@@ -16,13 +16,12 @@ const initialState: SessionKeyState = {
   sessionKeys: new Map(),
 };
 
-export const newSessionKey = createAsyncThunk<SessionKeyInfo, { keyInfo: KeyInfo }, ThunkExtra>("sessionkey/newSession", async (param, config) => {
-  const { keyInfo } = param;
+export const newSessionKey = createAsyncThunk<SessionKeyInfo, { keyInfo: KeyInfo, validityMinutes:number }, ThunkExtra>("sessionkey/newSession", async (param, config) => {
+  const { keyInfo, validityMinutes } = param;
 
   // TODO: implement the actual session key generation
   const key = new Date().getTime().toString();
 
-  const validityMinutes = 10;
   return { expires_at: new Date(new Date().getTime() + validityMinutes * 60 * 1000), keyInfo, key };
 })
 

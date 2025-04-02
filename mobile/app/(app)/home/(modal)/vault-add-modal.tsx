@@ -188,7 +188,7 @@ export default function Page() {
       </SafeAreaView>
 
       <BottonPanel>
-        <Text.H2>Seed Phrase</Text.H2>
+        <Text.H3 style={{color: theme.colors.primary}}>Seed Phrase</Text.H3>
         <Spacer />
         <TextCopy text={phrase} >
 
