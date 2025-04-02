@@ -4,6 +4,8 @@ import { GnoNativeApi, KeyInfo, SignTxResponse } from "@gnolang/gnonative";
 import * as Linking from 'expo-linking';
 import { RootState } from "../root-reducer";
 
+const DEFAULT_GAS_MARGIN = 110; // 1.1%
+
 export interface LinkingState {
   chainId?: string;
   remote?: string;
@@ -13,6 +15,8 @@ export interface LinkingState {
   /* The keyinfo of the selected account 'bech32Address' */
   keyinfo?: KeyInfo;
   txInput?: string;
+  /* Update the transaction with the new estimated gas wanted value */
+  updateTx?: boolean;
   /* The callback URL to return to after each operation */
   callback?: string;
   /* The path of the requested screen */
@@ -30,6 +34,7 @@ const initialState: LinkingState = {
   reason: undefined,
   bech32Address: undefined,
   txInput: undefined,
+  updateTx: undefined,
   callback: undefined,
   path: undefined,
   hostname: undefined,
@@ -81,6 +86,43 @@ export const signTx = createAsyncThunk<SignTxResponse, { keyInfo: KeyInfo }, Thu
   return signedTx
 });
 
+interface gasEstimation {
+  tx: string;
+  gasWanted: bigint;
+}
+
+// estimateGasWanted estimates the gas wanted value for the transaction.
+// If the `update` field is true, the transaction will be updated with the new gas wanted value.
+export const estimateGasWanted = createAsyncThunk<gasEstimation, { keyInfo: KeyInfo; updateTx: boolean }, ThunkExtra>(
+  "linking/estimateGas",
+  async ({ keyInfo, updateTx }, thunkAPI) => {
+    const gnonative = thunkAPI.extra.gnonative as GnoNativeApi;
+    const { txInput } = (thunkAPI.getState() as RootState).linking;
+    const { masterPassword } = (thunkAPI.getState() as RootState).signIn;
+
+    if (!masterPassword) {
+      throw new Error("No keyInfo found.");
+    }
+
+    const txJson = decodeURIComponent(txInput || "");
+
+    await gnonative.activateAccount(keyInfo.name);
+    await gnonative.setPassword(masterPassword, keyInfo.address);
+
+    // Estimate the gas used
+    const response = await gnonative.estimateGas(txJson, keyInfo?.address, DEFAULT_GAS_MARGIN, updateTx);
+    const gasWanted = response.gasWanted as bigint;
+    console.log("estimateGas: ", gasWanted);
+
+    // Update the transaction
+    if (updateTx) {
+      return { tx: response.txJson, gasWanted: gasWanted };
+    }
+
+    return { tx: txJson, gasWanted };
+  }
+);
+
 interface SetLinkResponse {
   chainId?: string;
   remote?: string;
@@ -88,6 +130,7 @@ interface SetLinkResponse {
   clientName?: string;
   bech32Address?: string;
   txInput?: string;
+  updateTx?: boolean;
   callback?: string;
   path: string;
   keyinfo?: KeyInfo;
@@ -117,6 +160,11 @@ export const setLinkingData = createAsyncThunk<SetLinkResponse, Linking.ParsedUR
     }
   }
 
+  let updateTx = false;
+  if (queryParams?.update_tx && (queryParams.update_tx as string) === "true") {
+    updateTx = true;
+  }
+
   return {
     chainId: queryParams?.chain_id ? queryParams.chain_id as string : undefined,
     remote: queryParams?.remote ? queryParams.remote as string : undefined,
@@ -125,6 +173,7 @@ export const setLinkingData = createAsyncThunk<SetLinkResponse, Linking.ParsedUR
     clientName: queryParams?.client_name ? queryParams.client_name as string : undefined,
     bech32Address,
     txInput: queryParams?.tx ? queryParams.tx as string : undefined,
+    updateTx: updateTx,
     callback: queryParams?.callback ? decodeURIComponent(queryParams.callback as string) : undefined,
     path: queryParams?.path as string || '',
     keyinfo,
@@ -152,6 +201,7 @@ export const linkingSlice = createSlice({
       state.clientName = action.payload.clientName;
       state.bech32Address = action.payload.bech32Address;
       state.txInput = action.payload.txInput;
+      state.updateTx = action.payload.updateTx;
       state.callback = action.payload.callback;
       state.path = action.payload.path;
       state.keyinfo = action.payload.keyinfo;
@@ -164,6 +214,7 @@ export const linkingSlice = createSlice({
     selectChainId: (state) => state.chainId,
     selectRemote: (state) => state.remote,
     selectTxInput: (state) => state.txInput,
+    selectUpdateTx: (state) => state.updateTx,
     selectCallback: (state) => state.callback,
     selectBech32Address: (state) => state.bech32Address,
     selectClientName: (state) => state.clientName,
@@ -180,7 +231,7 @@ const expo_default = 'expo-development-client';
 
 export const { clearLinking } = linkingSlice.actions;
 
-export const { selectTxInput, selectCallback, selectBech32Address, selectClientName,
+export const { selectTxInput, selectUpdateTx, selectCallback, selectBech32Address, selectClientName,
   reasonSelector, selectKeyInfo, selectAction, selectChainId, selectRemote,
   selectSession, selectSessionWanted
  } = linkingSlice.selectors;
