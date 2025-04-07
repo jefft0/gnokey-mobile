@@ -137,8 +137,8 @@ export default function Page() {
 
             <Ruller />
 
-            <FormItemInline label="Max Ammount" >
-              <TextBodyWhite>{'393939'} gnots</TextBodyWhite>
+            <FormItemInline label="Max Amount" >
+              <TextBodyWhite>{gasFee} ugnot</TextBodyWhite>
             </FormItemInline>
 
             {/* {sessionWanted &&
@@ -155,7 +155,7 @@ export default function Page() {
                 {remember ?
                   <View style={{ flexDirection: 'row', alignItems: 'center' }}>
                     <Text.Body>Auto-approve for next  </Text.Body>
-                    <TextInput value={validityMinutes?.toString()} onChangeText={x => setValidityMinutes(Number(x))} containerStyle={{ width: 100 }} keyboardType="number-pad" />
+                    <TextInput value={validityMinutes?.toString()} onChangeText={x => setValidityMinutes(Number(x))} containerStyle={{ width: 70 }} keyboardType="number-pad" />
                     <Text.Body>  minutes</Text.Body>
                   </View>
                   : null}
@@ -191,13 +191,7 @@ export default function Page() {
 
               <Ruller />
 
-              <FormItem label="Account Name">
-                <TextBodyWhite>{clientName}</TextBodyWhite>
-              </FormItem>
-
-              <Ruller />
-
-              <FormItem label="Keyinfo">
+              <FormItem label="Key name (local key store info)">
                 <TextBodyWhite>{JSON.stringify(keyInfo?.name)}</TextBodyWhite>
               </FormItem>
 
@@ -221,13 +215,13 @@ export default function Page() {
 
               <FormItem label="Session">
                 <TextBodyWhite>{session ? JSON.stringify(session) : 'undefined'}</TextBodyWhite>
-              </FormItem> */}
+              </FormItem>
 
               <Ruller />
 
               <FormItem label="Realms Allowed">
                 <TextBodyWhite>gno.land/r/berty/social</TextBodyWhite>
-              </FormItem>
+              </FormItem>*/}
 
               <Ruller />
 
