@@ -8,10 +8,9 @@ import { useGnoNativeContext } from "@gnolang/gnonative";
 import { router } from "expo-router";
 import { Children, useEffect, useState } from "react";
 import * as Linking from 'expo-linking';
-import { ScrollView, View, TextInput as RNTextInput, TouchableOpacity } from "react-native";
+import { ScrollView, View, TouchableOpacity, TextInput as RNTextInput } from "react-native";
 import { Button, ButtonText, Checkbox, FormItem, FormItemInline, Spacer, Text } from "@/modules/ui-components";
 import styled from "styled-components/native";
-import { CustomTabPanel } from "@/modules/ui-components/src/tabs";
 
 export default function Page() {
 
@@ -30,24 +29,24 @@ export default function Page() {
   const keyInfo = useAppSelector(selectKeyInfo);
   const chainId = useAppSelector(selectChainId);
   const remote = useAppSelector(selectRemote);
-  const session = useAppSelector(selectSession);
-  const sessionWanted = useAppSelector(selectSessionWanted);
+  // const session = useAppSelector(selectSession);
+  // const sessionWanted = useAppSelector(selectSessionWanted);
 
   console.log('txInput', txInput);
   console.log('bech32Address', bech32Address);
   console.log('clientName', clientName);
   console.log('reason', reason);
-  console.log('session', session);
-  console.log('sessionWanted', sessionWanted);
+  // console.log('session', session);
+  // console.log('sessionWanted', sessionWanted);
 
-  useEffect(() => {
-    if (session) {
-      // if we have a session, mwe can sign the tx and return to the requester.
-      setTimeout(() => {
-        signTxAndReturnToRequester()
-      }, 300);
-    }
-  }, [session])
+  // useEffect(() => {
+  //   if (session) {
+  //     // if we have a session, mwe can sign the tx and return to the requester.
+  //     setTimeout(() => {
+  //       signTxAndReturnToRequester()
+  //     }, 300);
+  //   }
+  // }, [session])
 
   useEffect(() => {
     (async () => {
@@ -71,24 +70,24 @@ export default function Page() {
 
     try {
 
-      let sessionToReturn;
-      if (session) {
-        // TODO: const storedSession = Look up session.key in sessionKeys.
-        //   if storedSession.exires_at > new Date(), throw new Error('session expired')
-      }
-      else {
-        if (sessionWanted) {
-          sessionToReturn = await dispatch(newSessionKey({ keyInfo, validityMinutes })).unwrap() as SessionKeyInfo
-        }
-        // else TODO: ask again for approval (like when there are no account sessions)
-      }
+      // let sessionToReturn;
+      // if (session) {
+      //   // TODO: const storedSession = Look up session.key in sessionKeys.
+      //   //   if storedSession.exires_at > new Date(), throw new Error('session expired')
+      // }
+      // else {
+      //   if (sessionWanted) {
+      //     sessionToReturn = await dispatch(newSessionKey({ keyInfo, validityMinutes })).unwrap() as SessionKeyInfo
+      //   }
+      //   // else TODO: ask again for approval (like when there are no account sessions)
+      // }
 
       const signedTx = await dispatch(signTx({ keyInfo })).unwrap();
 
       const path = new URL(callback);
       path.searchParams.append('tx', signedTx.signedTxJson);
       path.searchParams.append('status', 'success');
-      sessionToReturn && path.searchParams.append('session', JSON.stringify({ key: sessionToReturn.key, expires_at: sessionToReturn.expires_at.toISOString() }));
+      // sessionToReturn && path.searchParams.append('session', JSON.stringify({ key: sessionToReturn.key, expires_at: sessionToReturn.expires_at.toISOString() }));
 
       Linking.openURL(path.toString());
 
@@ -142,9 +141,7 @@ export default function Page() {
               <TextBodyWhite>{'393939'} gnots</TextBodyWhite>
             </FormItemInline>
 
-            <Ruller />
-
-            {sessionWanted &&
+            {/* {sessionWanted &&
               <>
                 <FormItemInline label="Remember this permission" >
                   <Checkbox
@@ -163,7 +160,7 @@ export default function Page() {
                   </View>
                   : null}
               </>
-            }
+            } */}
 
             <Ruller />
 
@@ -216,9 +213,7 @@ export default function Page() {
                 <TextBodyWhite>{chainId}</TextBodyWhite>
               </FormItem>
 
-              <Ruller />
-
-              <FormItem label="Session wanted">
+              {/* <FormItem label="Session wanted">
                 <TextBodyWhite>{JSON.stringify(sessionWanted)}</TextBodyWhite>
               </FormItem>
 
@@ -226,7 +221,7 @@ export default function Page() {
 
               <FormItem label="Session">
                 <TextBodyWhite>{session ? JSON.stringify(session) : 'undefined'}</TextBodyWhite>
-              </FormItem>
+              </FormItem> */}
 
               <Ruller />
 
@@ -236,8 +231,8 @@ export default function Page() {
 
               <Ruller />
 
-              <FormItem label="Transaction input">
-                <TextBodyWhite>{JSON.stringify(txInput)}</TextBodyWhite>
+              <FormItem label="Raw Transaction Data">
+                <TextBodyWhite>{txInput}</TextBodyWhite>
               </FormItem>
 
             </HiddenGroup>
@@ -246,7 +241,7 @@ export default function Page() {
           <Spacer space={32} />
 
           <View style={{ height: 100 }}>
-            <Button color="primary" onPress={signTxAndReturnToRequester} loading={loading || Boolean(session)}>Approve</Button>
+            <Button color="primary" onPress={signTxAndReturnToRequester} loading={loading}>Approve</Button>
             <Spacer />
           </View>
 
