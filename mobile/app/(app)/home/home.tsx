@@ -57,7 +57,7 @@ export default function Page() {
   };
 
   const navigateToAddKey = () => {
-    route.push("/tosign");
+    route.push("/home/vault-add-modal");
   }
 
   const onBookmarkPress = (keyInfo: Vault) => async () => {

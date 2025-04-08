@@ -1,6 +1,6 @@
 import { Layout, Ruller, TextInput } from "@/components";
 import {
-  selectClientName, selectBech32Address, selectTxInput, signTx, useAppDispatch,
+  estimateGasWanted, selectClientName, selectBech32Address, selectTxInput, selectUpdateTx, signTx, useAppDispatch,
   useAppSelector, reasonSelector, selectCallback, selectKeyInfo, clearLinking, selectChainId,
   selectRemote, selectSession, selectSessionWanted, newSessionKey, SessionKeyInfo
 } from "@/redux";
@@ -25,10 +25,13 @@ export default function Page() {
   const reason = useAppSelector(reasonSelector);
   const bech32Address = useAppSelector(selectBech32Address);
   const txInput = useAppSelector(selectTxInput);
+  const updateTx = useAppSelector(selectUpdateTx) ?? false;
   const callback = useAppSelector(selectCallback);
   const keyInfo = useAppSelector(selectKeyInfo);
   const chainId = useAppSelector(selectChainId);
   const remote = useAppSelector(selectRemote);
+  const [signedTx, setSignedTx] = useState<string | undefined>(undefined);
+  const [gasWanted, setGasWanted] = useState<bigint>(BigInt(0));
   // const session = useAppSelector(selectSession);
   // const sessionWanted = useAppSelector(selectSessionWanted);
 
@@ -58,6 +61,29 @@ export default function Page() {
       const accountNameStr = await gnonative.qEval("gno.land/r/sys/users", `ResolveAddress("${bech32Address}").Name()`);
     })();
   }, [bech32Address]);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        console.log("onChangeAccountHandler", keyInfo);
+
+        if (!txInput || !keyInfo) {
+          throw new Error("No transaction input or keyInfo found.");
+        }
+
+        const { gasWanted } = await dispatch(estimateGasWanted({ keyInfo, updateTx: updateTx })).unwrap();
+
+        // need to pause to let the Keybase DB close before using it again
+        await new Promise((f) => setTimeout(f, 1000));
+
+        const signedTx = await dispatch(signTx({ keyInfo })).unwrap();
+        setSignedTx(signedTx.signedTxJson);
+        setGasWanted(gasWanted);
+      } catch (error: unknown | Error) {
+        console.error(error);
+      }
+    })();
+  }, [txInput, keyInfo]);
 
   const signTxAndReturnToRequester = async () => {
     console.log('signing the tx', keyInfo);
@@ -137,8 +163,8 @@ export default function Page() {
 
             <Ruller />
 
-            <FormItemInline label="Max Amount" >
-              <TextBodyWhite>{gasFee} ugnot</TextBodyWhite>
+            <FormItemInline label="Gas Wanted" >
+              <TextBodyWhite>{gasWanted?.toString()}</TextBodyWhite>
             </FormItemInline>
 
             {/* {sessionWanted &&
