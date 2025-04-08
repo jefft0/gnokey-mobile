@@ -62,7 +62,7 @@ land.gno.gnokey://tosign?tx=%7B%22msg%22%3A%5B%7B%22%40type%22%3A%22%2Fvm.m_call
   - client_name: the name of the app that is calling the Gnokey Mobile app. It will be displayed to the user.
   - reason: the reason behind this action. It will be displayed to the user.
   - callback: the URL that Gnokey Mobile will call after signing the tx.
-  - update_tx (optional): if "true" then estimate the gas and update gas_wanted in the tx.
+  - update_tx (optional): if "true" then update gas_wanted in the tx with the estimated gas.
 
 Example response:
 
