@@ -1,22 +1,22 @@
-import { Stack } from "expo-router";
-import { ThemeProvider as ThemeProvider2 } from "@react-navigation/native";
-import { Guard } from "@/components/auth/guard";
-import { GnoNativeProvider } from "@gnolang/gnonative";
-import { IndexerProvider, LinkingProvider, ReduxProvider } from "@/providers";
-import { DefaultTheme } from "@/assets/styles";
-import { ThemeProvider } from "@/modules/ui-components";
+import { Stack } from 'expo-router'
+import { ThemeProvider as ThemeProvider2 } from '@react-navigation/native'
+import { Guard } from '@/components/auth/guard'
+import { GnoNativeProvider } from '@gnolang/gnonative'
+import { IndexerProvider, LinkingProvider, ReduxProvider } from '@/providers'
+import { DefaultTheme } from '@/assets/styles'
+import { ThemeProvider } from '@/modules/ui-components'
 
 const gnoDefaultConfig = {
   // @ts-ignore
   remote: process.env.EXPO_PUBLIC_GNO_REMOTE!,
   // @ts-ignore
-  chain_id: process.env.EXPO_PUBLIC_GNO_CHAIN_ID!,
-};
+  chain_id: process.env.EXPO_PUBLIC_GNO_CHAIN_ID!
+}
 
 const indexerConfig = {
   // @ts-ignore
-  remote: process.env.EXPO_PUBLIC_TXINDEXER_REMOTE!,
-};
+  remote: process.env.EXPO_PUBLIC_TXINDEXER_REMOTE!
+}
 
 export default function AppLayout() {
   return (
@@ -31,7 +31,7 @@ export default function AppLayout() {
                     screenOptions={{
                       headerShown: false,
                       headerLargeTitle: true,
-                      headerBackVisible: false,
+                      headerBackVisible: false
                     }}
                   />
                 </Guard>
@@ -41,5 +41,5 @@ export default function AppLayout() {
         </ReduxProvider>
       </IndexerProvider>
     </GnoNativeProvider>
-  );
+  )
 }

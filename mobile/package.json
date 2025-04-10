@@ -10,7 +10,9 @@
     "web": "expo start --web",
     "prebuild": "expo prebuild",
     "ts:check": "tsc",
-    "test": "vitest"
+    "test": "vitest",
+    "lint": "eslint .",
+    "prettier:fix": "prettier . --write"
   },
   "dependencies": {
     "@bufbuild/protobuf": "^1.6.0",
@@ -56,11 +58,20 @@
   "devDependencies": {
     "@babel/core": "^7.20.0",
     "@types/react": "~18.2.79",
+    "eslint": "^8.57.0",
+    "eslint-config-expo": "~7.1.2",
+    "eslint-config-prettier": "^10.1.1",
+    "eslint-plugin-prettier": "^5.2.6",
+    "lint-staged": "^15.5.0",
+    "prettier": "^3.5.3",
     "typescript": "~5.3.3",
     "vitest": "^3.0.9"
   },
   "overrides": {
     "react-refresh": "~0.14.0"
   },
-  "private": true
+  "private": true,
+  "lint-staged": {
+    "*.js": "eslint --cache --fix"
+  }
 }
