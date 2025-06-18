@@ -19,16 +19,15 @@ import { useGnoNativeContext } from '@gnolang/gnonative'
 import { router } from 'expo-router'
 import { useEffect, useState } from 'react'
 import * as Linking from 'expo-linking'
-import { ScrollView, View, TouchableOpacity } from 'react-native'
-import { Button, ButtonText, FormItem, FormItemInline, Spacer, Text } from '@/modules/ui-components'
+import { ScrollView, View, TouchableOpacity, SafeAreaView, ActivityIndicator } from 'react-native'
+import { Button, Container, FormItem, FormItemInline, Spacer, Text } from '@/modules/ui-components'
 import styled from 'styled-components/native'
 
 export default function Page() {
-  const [loading, setLoading] = useState(false)
   const dispatch = useAppDispatch()
   const { gnonative } = useGnoNativeContext()
-  const clientName = useAppSelector(selectClientName)
 
+  const clientName = useAppSelector(selectClientName)
   const reason = useAppSelector(reasonSelector)
   const bech32Address = useAppSelector(selectBech32Address)
   const txInput = useAppSelector(selectTxInput)
@@ -37,32 +36,25 @@ export default function Page() {
   const keyInfo = useAppSelector(selectKeyInfo)
   const chainId = useAppSelector(selectChainId)
   const remote = useAppSelector(selectRemote)
+
+  const [loading, setLoading] = useState(false)
+  const [gnonativeReady, setGnonativeReady] = useState(false)
   const [signedTx, setSignedTx] = useState<string | undefined>(undefined)
   const [gasWanted, setGasWanted] = useState<bigint>(BigInt(0))
-  // const session = useAppSelector(selectSession);
-  // const sessionWanted = useAppSelector(selectSessionWanted);
 
   console.log('txInput', txInput)
   console.log('bech32Address', bech32Address)
   console.log('clientName', clientName)
   console.log('reason', reason)
-  // console.log('session', session);
-  // console.log('sessionWanted', sessionWanted);
-
-  // useEffect(() => {
-  //   if (session) {
-  //     // if we have a session, mwe can sign the tx and return to the requester.
-  //     setTimeout(() => {
-  //       signTxAndReturnToRequester()
-  //     }, 300);
-  //   }
-  // }, [session])
+  console.log('callback', callback)
 
   useEffect(() => {
     ;(async () => {
-      if (!chainId || !remote) throw new Error('No chainId or remote found.')
-      gnonative.setChainID(chainId)
-      gnonative.setRemote(remote)
+      if (!chainId || !remote || !bech32Address) return
+      await gnonative.setChainID(chainId)
+      await gnonative.setRemote(remote)
+      await gnonative.activateAccount(bech32Address)
+      setGnonativeReady(true)
     })()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [bech32Address])
@@ -70,16 +62,18 @@ export default function Page() {
   useEffect(() => {
     ;(async () => {
       try {
-        console.log('onChangeAccountHandler', keyInfo)
-
-        if (!txInput || !keyInfo) {
-          throw new Error('No transaction input or keyInfo found.')
+        if (!txInput || !keyInfo || !gnonativeReady) {
+          console.log('No txInput, keyInfo, or gnonativeReady')
+          return
         }
+
+        // need to pause to let the Keybase DB close before using it again
+        await new Promise((f) => setTimeout(f, 2000))
 
         const { gasWanted } = await dispatch(estimateGasWanted({ keyInfo, updateTx: updateTx })).unwrap()
 
         // need to pause to let the Keybase DB close before using it again
-        await new Promise((f) => setTimeout(f, 1000))
+        await new Promise((f) => setTimeout(f, 2000))
 
         const signedTx = await dispatch(signTx({ keyInfo })).unwrap()
         setSignedTx(signedTx.signedTxJson)
@@ -89,7 +83,7 @@ export default function Page() {
       }
     })()
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [txInput, keyInfo])
+  }, [txInput, keyInfo, gnonativeReady])
 
   const signTxAndReturnToRequester = async () => {
     console.log('signing the tx', keyInfo)
@@ -144,99 +138,77 @@ export default function Page() {
 
   return (
     <>
-      <Layout.Container>
-        <View style={{ flexDirection: 'row', justifyContent: 'flex-end' }}>
-          <ButtonText onPress={onCancel}>
-            <Text.ButtonLabelBlack>Cancel</Text.ButtonLabelBlack>
-          </ButtonText>
-        </View>
-        <Layout.Body>
-          <Text.H3 style={{ textAlign: 'center', paddingHorizontal: 16 }}>
-            <Text.H3>{clientName} </Text.H3>
-            is requiring permission to
-            <Text.H3> {reason}.</Text.H3>
-          </Text.H3>
+      <Container>
+        <SafeAreaView>
+          {/* <View style={{ flexDirection: 'row', paddingTop: 16 }}>
+            <ButtonText onPress={onCancel}>
+              <Text.ButtonLabelBlack>Cancel</Text.ButtonLabelBlack>
+            </ButtonText>
+          </View> */}
+          <Layout.Body>
+            <Text.H3 style={{ textAlign: 'center', paddingHorizontal: 16 }}>
+              <Text.H3>{clientName} </Text.H3>
+              is requiring permission to
+              <Text.H3> {reason}</Text.H3>
+            </Text.H3>
 
-          <Spacer space={32} />
+            <ScrollView contentContainerStyle={{}}>
+              <Ruller />
 
-          <ScrollView contentContainerStyle={{}}>
-            <Ruller />
-
-            <FormItem label="Client name">
-              <TextBodyBlack>{clientName}</TextBodyBlack>
-            </FormItem>
-
-            <Ruller />
-
-            <FormItemInline label="Gas Wanted">
-              <TextBodyWhite>{gasWanted?.toString()}</TextBodyWhite>
-            </FormItemInline>
-
-            {/* {sessionWanted &&
-              <>
-                <FormItemInline label="Remember this permission" >
-                  <Checkbox
-                    label=""
-                    checked={remember}
-                    onPress={() => setRemember(prev => !prev)}
-                  />
-                </FormItemInline>
-
-
-                {remember ?
-                  <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                    <Text.Body>Auto-approve for next  </Text.Body>
-                    <TextInput value={validityMinutes?.toString()} onChangeText={x => setValidityMinutes(Number(x))} containerStyle={{ width: 70 }} keyboardType="number-pad" />
-                    <Text.Body>  minutes</Text.Body>
-                  </View>
-                  : null}
-              </>
-            } */}
-
-            <Ruller />
-
-            <HiddenGroup>
               <FormItem label="Client name">
-                <TextBodyWhite>{clientName}</TextBodyWhite>
+                <TextBodyBlack>{clientName}</TextBodyBlack>
               </FormItem>
 
               <Ruller />
 
-              <FormItem label="Reason">
-                <TextBodyWhite>{reason}</TextBodyWhite>
-              </FormItem>
+              <FormItemInline label="Gas Wanted">
+                {gasWanted ? <TextBodyWhite>{gasWanted?.toString()}</TextBodyWhite> : <ActivityIndicator />}
+              </FormItemInline>
 
               <Ruller />
 
-              <FormItem label="Callback">
-                <TextBodyWhite>{callback}</TextBodyWhite>
-              </FormItem>
+              <HiddenGroup>
+                <FormItem label="Client name">
+                  <TextBodyWhite>{clientName}</TextBodyWhite>
+                </FormItem>
 
-              <Ruller />
+                <Ruller />
 
-              <FormItem label="Address">
-                <TextBodyWhite>{bech32Address}</TextBodyWhite>
-              </FormItem>
+                <FormItem label="Reason">
+                  <TextBodyWhite>{reason}</TextBodyWhite>
+                </FormItem>
 
-              <Ruller />
+                <Ruller />
 
-              <FormItem label="Key name (local key store info)">
-                <TextBodyWhite>{JSON.stringify(keyInfo?.name)}</TextBodyWhite>
-              </FormItem>
+                <FormItem label="Callback">
+                  <TextBodyWhite>{callback}</TextBodyWhite>
+                </FormItem>
 
-              <Ruller />
+                <Ruller />
 
-              <FormItem label="Remote">
-                <TextBodyWhite>{remote}</TextBodyWhite>
-              </FormItem>
+                <FormItem label="Address">
+                  <TextBodyWhite>{bech32Address}</TextBodyWhite>
+                </FormItem>
 
-              <Ruller />
+                <Ruller />
 
-              <FormItem label="Chain ID">
-                <TextBodyWhite>{chainId}</TextBodyWhite>
-              </FormItem>
+                <FormItem label="Key name (local key store info)">
+                  <TextBodyWhite>{JSON.stringify(keyInfo?.name)}</TextBodyWhite>
+                </FormItem>
 
-              {/* <FormItem label="Session wanted">
+                <Ruller />
+
+                <FormItem label="Remote">
+                  <TextBodyWhite>{remote}</TextBodyWhite>
+                </FormItem>
+
+                <Ruller />
+
+                <FormItem label="Chain ID">
+                  <TextBodyWhite>{chainId}</TextBodyWhite>
+                </FormItem>
+
+                {/* <FormItem label="Session wanted">
                 <TextBodyWhite>{JSON.stringify(sessionWanted)}</TextBodyWhite>
               </FormItem>
 
@@ -252,30 +224,32 @@ export default function Page() {
                 <TextBodyWhite>gno.land/r/berty/social</TextBodyWhite>
               </FormItem>*/}
 
-              <Ruller />
+                <Ruller />
 
-              <FormItem label="Raw Transaction Data">
-                <TextBodyWhite>{txInput}</TextBodyWhite>
-              </FormItem>
+                <FormItem label="Raw Transaction Data">
+                  <TextBodyWhite>{txInput}</TextBodyWhite>
+                </FormItem>
 
-              <Ruller />
+                <Ruller />
 
-              <FormItem label="Raw Signed Data">
-                <TextBodyWhite>{signedTx}</TextBodyWhite>
-              </FormItem>
-            </HiddenGroup>
-          </ScrollView>
+                <FormItem label="Raw Signed Data">
+                  {signedTx ? <TextBodyWhite>{signedTx?.toString()}</TextBodyWhite> : <ActivityIndicator />}
+                </FormItem>
+              </HiddenGroup>
+            </ScrollView>
 
-          <Spacer space={32} />
-
-          <View style={{ height: 100 }}>
-            <Button color="primary" onPress={signTxAndReturnToRequester} loading={loading}>
-              Approve
-            </Button>
-            <Spacer />
-          </View>
-        </Layout.Body>
-      </Layout.Container>
+            <View style={{ height: 100 }}>
+              <Button color="primary" onPress={signTxAndReturnToRequester} loading={loading}>
+                Approve
+              </Button>
+              <Spacer />
+              <Button color="secondary" onPress={onCancel} loading={loading}>
+                Cancel
+              </Button>
+            </View>
+          </Layout.Body>
+        </SafeAreaView>
+      </Container>
     </>
   )
 }
@@ -305,9 +279,9 @@ const HiddenGroup = ({ children }: React.PropsWithChildren) => {
 }
 
 const TextBodyWhite = styled(Text.Body)`
-  color: white;
+  color: black;
 `
 const TextBodyBlack = styled(Text.Body)`
   font-weight: 400;
-  color: white;
+  color: black;
 `

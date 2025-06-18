@@ -1,8 +1,7 @@
-import { createAsyncThunk, createSlice } from '@reduxjs/toolkit'
+import { createAsyncThunk, createSlice, RootState } from '@reduxjs/toolkit'
 import { ThunkExtra } from '@/providers/redux-provider'
 import { GnoNativeApi, KeyInfo, SignTxResponse } from '@gnolang/gnonative'
 import * as Linking from 'expo-linking'
-import { RootState } from '../root-reducer'
 
 const DEFAULT_GAS_MARGIN = 110 // 1.1%
 
@@ -153,7 +152,7 @@ export const setLinkingData = createAsyncThunk<SetLinkResponse, Linking.ParsedUR
     const queryParams = parsedURL.queryParams
     const gnonative = thunkAPI.extra.gnonative as GnoNativeApi
 
-    const bech32Address = queryParams?.address ? (queryParams.address as string) : undefined
+    const bech32Address = queryParams?.address ? (queryParams.address as string).trim() : undefined
     let keyinfo: KeyInfo | undefined
 
     if (bech32Address) {
@@ -166,6 +165,7 @@ export const setLinkingData = createAsyncThunk<SetLinkResponse, Linking.ParsedUR
         }
       }
     }
+    console.log('keyinfoxxx', keyinfo)
 
     let updateTx = false
     if (queryParams?.update_tx && (queryParams.update_tx as string) === 'true') {
