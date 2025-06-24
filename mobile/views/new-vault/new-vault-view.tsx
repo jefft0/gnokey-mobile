@@ -9,8 +9,8 @@ import {
   VaultCreationState,
   existingAccountSelector,
   newAccountSelector,
-  onboarding,
-  addVault,
+  registerAccount,
+  createKey,
   signUpStateSelector,
   selectKeyName,
   selectPhrase,
@@ -98,7 +98,7 @@ export const NewVaultView = (props: Props) => {
 
     // Use the same regex and error message as r/gnoland/users/v1
     if (!keyName.match('^[a-z]{3}[_a-z0-9]{0,14}[0-9]{3}$')) {
-      setError('Invalid vault name.')
+      setError('Invalid Master Key Name.')
       return
     }
 
@@ -110,12 +110,12 @@ export const NewVaultView = (props: Props) => {
     if (signUpState === VaultCreationState.user_exists_only_on_local_storage && existingAccount) {
       await gnonative.activateAccount(keyName)
       await gnonative.setPassword(masterPassword, existingAccount.address)
-      await dispatch(onboarding({ account: existingAccount })).unwrap()
+      await dispatch(registerAccount()).unwrap()
       return
     }
 
     try {
-      await dispatch(addVault({ name: keyName, password: masterPassword, phrase })).unwrap()
+      await dispatch(createKey({ name: keyName, password: masterPassword, phrase })).unwrap()
       await dispatch(fetchVaults()).unwrap()
 
       dispatch(checkForKeyOnChains())
@@ -130,12 +130,12 @@ export const NewVaultView = (props: Props) => {
       <View style={{ paddingVertical: 16, paddingBottom: 40 }}>
         <Spacer space={16} />
         <Text.Caption1>
-          Vault name must be 6-20 characters, start with 3 lowercase letters, can include lowercase letters, numbers, underscores,
-          and must end with 3 digits.
+          Master Key Name must be 6-20 characters, start with 3 lowercase letters, can include lowercase letters, numbers,
+          underscores, and must end with 3 digits.
         </Text.Caption1>
         <TextField
-          label="Vault name"
-          placeholder="Vault name"
+          label="Master Key Name"
+          placeholder="Master Key Name"
           value={keyName}
           onChangeText={(x) => dispatch(setKeyName(x))}
           autoCapitalize="none"
@@ -144,7 +144,7 @@ export const NewVaultView = (props: Props) => {
           error={error}
         />
         <Spacer space={16} />
-        <ChainSelectView />
+        {/* <ChainSelectView /> */}
       </View>
       <Button onPress={onCreate} loading={loading}>
         Continue
