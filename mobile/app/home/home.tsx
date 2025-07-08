@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
-import { FlatList, TouchableOpacity, View } from 'react-native'
-import { useRouter } from 'expo-router'
+import { FlatList, TouchableOpacity } from 'react-native'
+import { Link, useRouter } from 'expo-router'
 import { BetaVersionMiniBanner, Layout } from '@/components/index'
 import {
   checkForKeyOnChains,
@@ -13,9 +13,10 @@ import {
 } from '@/redux'
 import VaultListItem from '@/components/list/vault-list/VaultListItem'
 import { setVaultToEdit, fetchVaults } from '@/redux'
-import { AppBar, Button, TextField, Spacer, Text, Container, SafeAreaView } from '@/modules/ui-components'
+import { AppBar, Button, TextField, Spacer, Text, Container, SafeAreaView, BottonPanel } from '@/modules/ui-components'
 import { FontAwesome6 } from '@expo/vector-icons'
 import styled from 'styled-components/native'
+import { EmptyView } from '@/views'
 
 export default function Page() {
   const isFirstRender = useRef(true)
@@ -85,30 +86,32 @@ export default function Page() {
     <>
       <Container>
         <SafeAreaView style={{ marginBottom: 40 }}>
-          <BetaVersionMiniBanner />
           <AppBar>
-            <View>
-              <Text.H3>GnoKey Mobile</Text.H3>
+            <Text.H2 style={{ textAlign: 'center' }}>
+              {filteredAccounts.length} {filteredAccounts.length > 1 ? 'accounts' : 'account'}
+            </Text.H2>
+            <TouchableOpacity
+              onPress={() => route.navigate('/home/settings')}
+              style={{ flexDirection: 'row', alignItems: 'center' }}
+            >
+              <FontAwesome6 name="gear" size={12} color="#888" style={{ marginRight: 4 }} />
               <Text.Caption>{currentChain?.chainName}</Text.Caption>
-            </View>
-            <TouchableOpacity onPress={() => route.navigate('/home/settings')}>
-              <Text.Caption>Settings</Text.Caption>
             </TouchableOpacity>
           </AppBar>
           <TextField
             placeholder="Search Vault"
+            style={{ marginHorizontal: 10 }}
             value={nameSearch}
             onChangeText={setNameSearch}
             autoCapitalize="none"
             autoCorrect={false}
             hideError
           />
-          <Text.Body style={{ textAlign: 'center' }}>
-            {filteredAccounts.length} {filteredAccounts.length > 1 ? 'results' : 'result'}
-          </Text.Body>
-          <Spacer space={8} />
+          <BetaVersionMiniBanner />
+          <Spacer />
           <Content>
             <Body>
+              {vaults?.length === 0 && <EmptyView />}
               {filteredAccounts && (
                 <FlatList
                   data={filteredAccounts}
@@ -124,14 +127,31 @@ export default function Page() {
                 />
               )}
             </Body>
-            <Botton>
+            {/* <Botton>
               <Button onPress={navigateToAddKey} color="primary" endIcon={<FontAwesome6 name="add" size={16} color="black" />}>
                 New Account Key
               </Button>
-            </Botton>
+            </Botton> */}
           </Content>
         </SafeAreaView>
       </Container>
+      <BottonPanel>
+        <HorizontalGroup>
+          <Button
+            onPress={navigateToAddKey}
+            color="primary"
+            startIcon={<FontAwesome6 name="add" size={16} color="white" />}
+            style={{ width: 230 }}
+          >
+            Add Account
+          </Button>
+          <Link href="/home/settings" asChild>
+            <TouchableOpacity>
+              <Text.Link>Settings</Text.Link>
+            </TouchableOpacity>
+          </Link>
+        </HorizontalGroup>
+      </BottonPanel>
     </>
   )
 }
@@ -139,8 +159,11 @@ export default function Page() {
 const Body = styled.View`
   flex: 1;
 `
-const Botton = styled.View`
-  margin-top: 6px;
+const HorizontalGroup = styled.View`
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
 `
 const Content = styled.View`
   flex: 1;
