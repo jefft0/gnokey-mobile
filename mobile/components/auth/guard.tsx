@@ -11,14 +11,19 @@ function useProtectedRoute(signedIn?: boolean) {
   const segments = useSegments()
   const router = useRouter()
 
-  const unauthSegments = ['sign-up', 'sign-in', 'forgot-pass']
+  const unauthSegments = ['sign-up', 'sign-in', 'forgot-pass', 'onboarding', 'welcome']
 
   React.useEffect(() => {
     // @ts-ignore
-    const inAuthGroup = segments.length === 0 || unauthSegments.includes(segments[0])
+    // console.log('useProtectedRoute', { segments })
+    const inAuthGroup =
+      !segments[0] || // root path
+      segments.includes('onboarding') || // allow any route with 'onboarding' in the path
+      segments.some((seg) => unauthSegments.includes(seg))
 
     // If the user is not signed in and the initial segment is not anything in the auth group.
     if (!signedIn && !inAuthGroup) {
+      console.log('User not signed <guard>', segments)
       router.replace('/')
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
