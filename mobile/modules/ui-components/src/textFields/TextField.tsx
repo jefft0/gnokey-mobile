@@ -2,7 +2,8 @@ import React, { forwardRef, useEffect } from 'react'
 import { TextInputProps, TextInput } from 'react-native'
 import styled, { DefaultTheme } from 'styled-components/native'
 import { FontAwesome } from '@expo/vector-icons'
-import { ErrorBox } from '../alert'
+import { Text } from '..'
+import { Form } from '../../molecules'
 
 export type Props = {
   label?: string
@@ -11,12 +12,13 @@ export type Props = {
   error?: string
   color?: 'secondary'
   hideError?: boolean
+  leftIcon?: React.ReactNode
 } & TextInputProps
 
 type PropsWithTheme = Props & { theme: DefaultTheme }
 
 export const TextField = forwardRef<TextInput, Props>((props, ref) => {
-  const { type = 'text', label, description, error, value, hideError = true, ...rest } = props
+  const { type = 'text', label, description, error, value, hideError = true, leftIcon, ...rest } = props
   const [isSecureText, setShowSecureText] = React.useState(type === 'password')
   const [inputValue, setInputValue] = React.useState<string | undefined>(value)
 
@@ -37,6 +39,7 @@ export const TextField = forwardRef<TextInput, Props>((props, ref) => {
         {label && <Label>{label}</Label>}
         {description && <Description>{description}</Description>}
         <Content {...rest}>
+          {leftIcon ? <LeftIconContainer>{leftIcon}</LeftIconContainer> : null}
           <TextFieldStyled
             ref={ref}
             {...rest}
@@ -56,12 +59,18 @@ export const TextField = forwardRef<TextInput, Props>((props, ref) => {
           ) : null}
         </Content>
       </Container>
-      {hideError ? null : <ErrorBox>{error}</ErrorBox>}
+      {hideError ? null : <Form.ErrorBox>{error}</Form.ErrorBox>}
     </>
   )
 })
 
 TextField.displayName = 'TextField'
+
+const LeftIconContainer = styled.View`
+  margin-right: 8px;
+  justify-content: center;
+  align-items: center;
+`
 
 const Container = styled.View`
   flex-direction: column;
@@ -69,20 +78,17 @@ const Container = styled.View`
   width: 100%;
   padding-bottom: 2px;
 `
-const Label = styled.Text`
-  font-weight: 590;
-  font-size: 15px;
-  line-height: 20px;
-  letter-spacing: -0.24px;
+export const Label = styled(Text.Subheadline)`
   color: ${(props) => props.theme.textinputs.label};
-`
-const Description = styled.Text`
-  font-weight: 400;
-  font-size: 13px;
   line-height: 20px;
+  font-weight: ${Text.weights.semibold};
+  padding-bottom: 4px;
+`
+export const Description = styled(Text.Subheadline)`
+  font-weight: ${Text.weights.regular};
   letter-spacing: -0.24px;
-  padding-bottom: 12px;
-  padding-top: 4px;
+  line-height: 20px;
+  padding-bottom: 8px;
   color: ${(props) => props.theme.text.textMuted};
 `
 const Content = styled.View<PropsWithTheme>`
@@ -100,9 +106,9 @@ const TextFieldStyled = styled.TextInput.attrs((props: PropsWithTheme) => ({
   flex: 1;
   height: 46px;
   width: 100%;
-  font-weight: 500;
+  font-weight: 400;
   line-height: 20px;
-  font-size: 18px;
+  font-size: 17px;
   placeholder: ${(p) => p.theme.textinputs.label};
   border-style: solid;
 `

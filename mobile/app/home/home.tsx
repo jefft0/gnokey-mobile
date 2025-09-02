@@ -1,30 +1,36 @@
 import { useEffect, useRef, useState } from 'react'
 import { FlatList, TouchableOpacity } from 'react-native'
 import { Link, useRouter } from 'expo-router'
-import { BetaVersionMiniBanner, Layout } from '@/components/index'
+import { Layout } from '@/components/index'
 import {
   checkForKeyOnChains,
   useAppDispatch,
   useAppSelector,
   selectVaults,
-  setBookmark,
-  Vault,
-  selectCurrentChain
+  setCurrentChain,
+  selectCurrentChain,
+  selectChainsAvailable
 } from '@/redux'
 import VaultListItem from '@/components/list/vault-list/VaultListItem'
 import { setVaultToEdit, fetchVaults } from '@/redux'
-import { AppBar, Button, TextField, Spacer, Text, Container, SafeAreaView, BottonPanel } from '@/modules/ui-components'
-import { FontAwesome6 } from '@expo/vector-icons'
-import styled from 'styled-components/native'
-import { EmptyView } from '@/views'
+import { Button, TextField, Text, Container, HomeLayout, Spacer } from '@/modules/ui-components'
+import { FontAwesome6, FontAwesome5 } from '@expo/vector-icons'
+import { useTheme } from 'styled-components/native'
+import { HomeEmptyBox, HomeNotFoundBox } from '@/modules/ui-components/molecules'
+import { NetworkSelectionModal } from '@/modules/ui-components/organisms'
+import { Vault } from '@/types'
+import { HorizontalGroup, ScreenHeader } from '@/modules/ui-components/templates'
 
 export default function Page() {
   const isFirstRender = useRef(true)
 
+  const [showNetworkModal, setShowNetworkModal] = useState(false)
   const [nameSearch, setNameSearch] = useState<string>('')
   const [filteredAccounts, setFilteredAccounts] = useState<Vault[]>([])
   const [loading, setLoading] = useState<string | undefined>(undefined)
   const currentChain = useAppSelector(selectCurrentChain)
+  const networks = useAppSelector(selectChainsAvailable)
+  const theme = useTheme()
 
   const route = useRouter()
   const dispatch = useAppDispatch()
@@ -60,16 +66,11 @@ export default function Page() {
 
   const onChangeAccountHandler = async (vault: Vault) => {
     await dispatch(setVaultToEdit({ vault }))
-    route.push('/home/vault-detail-modal')
+    route.push('/home/vault/edit')
   }
 
   const navigateToAddKey = () => {
-    route.push('home/vault')
-  }
-
-  const onBookmarkPress = (keyInfo: Vault) => async () => {
-    console.log('Bookmark pressed', keyInfo.keyInfo.address)
-    dispatch(setBookmark({ keyAddress: keyInfo.keyInfo.address, value: !keyInfo.bookmarked }))
+    route.push('home/vault/add')
   }
 
   if (loading) {
@@ -84,87 +85,75 @@ export default function Page() {
 
   return (
     <>
-      <Container>
-        <SafeAreaView style={{ marginBottom: 40 }}>
-          <AppBar>
-            <Text.H2 style={{ textAlign: 'center' }}>
-              {filteredAccounts.length} {filteredAccounts.length > 1 ? 'accounts' : 'account'}
-            </Text.H2>
-            <TouchableOpacity
-              onPress={() => route.navigate('/home/settings')}
-              style={{ flexDirection: 'row', alignItems: 'center' }}
-            >
-              <FontAwesome6 name="gear" size={12} color="#888" style={{ marginRight: 4 }} />
-              <Text.Caption>{currentChain?.chainName}</Text.Caption>
-            </TouchableOpacity>
-          </AppBar>
-          <TextField
-            placeholder="Search Vault"
-            style={{ marginHorizontal: 10 }}
-            value={nameSearch}
-            onChangeText={setNameSearch}
-            autoCapitalize="none"
-            autoCorrect={false}
-            hideError
-          />
-          <BetaVersionMiniBanner />
-          <Spacer />
-          <Content>
-            <Body>
-              {vaults?.length === 0 && <EmptyView />}
-              {filteredAccounts && (
-                <FlatList
-                  data={filteredAccounts}
-                  renderItem={({ item }) => (
-                    <VaultListItem
-                      vault={item}
-                      onVaultPress={onChangeAccountHandler}
-                      chains={item.chains}
-                      onBookmarkPress={onBookmarkPress(item)}
-                    />
-                  )}
-                  keyExtractor={(item) => item.keyInfo.name}
-                />
-              )}
-            </Body>
-            {/* <Botton>
-              <Button onPress={navigateToAddKey} color="primary" endIcon={<FontAwesome6 name="add" size={16} color="black" />}>
-                New Account Key
-              </Button>
-            </Botton> */}
-          </Content>
-        </SafeAreaView>
-      </Container>
-      <BottonPanel>
-        <HorizontalGroup>
-          <Button
-            onPress={navigateToAddKey}
-            color="primary"
-            startIcon={<FontAwesome6 name="add" size={16} color="white" />}
-            style={{ width: 230 }}
+      <NetworkSelectionModal
+        visible={showNetworkModal}
+        onClose={() => setShowNetworkModal(false)}
+        onNetworkSelect={async (v) => {
+          setShowNetworkModal(false)
+          await dispatch(setCurrentChain(v)).unwrap()
+          dispatch(fetchVaults())
+        }}
+        onAddChain={() => {
+          setShowNetworkModal(false)
+          route.push('/home/network/new')
+        }}
+        networks={networks}
+        currentNetwork={currentChain}
+      />
+      <HomeLayout
+        footerWithBorder
+        contentPadding={32}
+        header={
+          <ScreenHeader
+            title={`${filteredAccounts.length} ${filteredAccounts.length > 1 ? 'accounts' : 'account'}`}
+            headerBackVisible={false}
+            rightComponent={
+              <TouchableOpacity onPress={() => setShowNetworkModal(true)} style={{ flexDirection: 'row', alignItems: 'center' }}>
+                <FontAwesome5 name="network-wired" size={20} color={theme.colors.link} style={{ marginRight: 4 }} />
+                <Text.LinkText>{currentChain ? currentChain.chainName : 'No Registration'}</Text.LinkText>
+              </TouchableOpacity>
+            }
           >
-            Add Account
-          </Button>
-          <Link href="/home/settings" asChild>
-            <TouchableOpacity>
-              <Text.Link>Settings</Text.Link>
-            </TouchableOpacity>
-          </Link>
-        </HorizontalGroup>
-      </BottonPanel>
+            <Spacer space={16} />
+            <TextField
+              placeholder="Search"
+              value={nameSearch}
+              onChangeText={setNameSearch}
+              autoCapitalize="none"
+              autoCorrect={false}
+              hideError
+              leftIcon={<FontAwesome6 name="magnifying-glass" size={16} color={theme.text.textMuted} />}
+            />
+          </ScreenHeader>
+        }
+        footer={
+          <HorizontalGroup>
+            <Button
+              onPress={navigateToAddKey}
+              color="primary"
+              startIcon={<FontAwesome6 name="add" size={16} color="white" />}
+              style={{ width: 230 }}
+            >
+              Add Account
+            </Button>
+            <Link href="/home/settings" asChild>
+              <TouchableOpacity>
+                <Text.LinkText>Settings</Text.LinkText>
+              </TouchableOpacity>
+            </Link>
+          </HorizontalGroup>
+        }
+      >
+        {filteredAccounts && (
+          <FlatList
+            data={filteredAccounts}
+            ListEmptyComponent={vaults?.length === 0 ? <HomeEmptyBox /> : <HomeNotFoundBox />}
+            renderItem={({ item }) => <VaultListItem vault={item} onVaultPress={onChangeAccountHandler} />}
+            keyExtractor={(item) => item.keyInfo.name}
+            contentContainerStyle={{ paddingBottom: 80, flexGrow: 1 }}
+          />
+        )}
+      </HomeLayout>
     </>
   )
 }
-
-const Body = styled.View`
-  flex: 1;
-`
-const HorizontalGroup = styled.View`
-  flex-direction: row;
-  align-items: center;
-  justify-content: space-between;
-  width: 100%;
-`
-const Content = styled.View`
-  flex: 1;
-`

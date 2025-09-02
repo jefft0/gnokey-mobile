@@ -1,13 +1,7 @@
 import { Stack } from 'expo-router'
 
 const defaultOptions = {
-  headerTransparent: true,
-  headerLargeTitle: false,
-  headerShadowVisible: true,
-  headerLargeTitleShadowVisible: false,
-  headerLargeStyle: {
-    backgroundColor: 'transparent'
-  }
+  headerShown: false
 }
 
 export default function VaultModalLayout() {
@@ -21,22 +15,42 @@ export default function VaultModalLayout() {
         }}
       />
       <Stack.Screen name="recovery-options" options={{ ...defaultOptions, title: '' }} />
-      {/* <Stack.Screen name="home/vault" options={{ title: 'Vaults vv' }} /> */}
 
       {/* Create a new vault stack */}
       <Stack.Screen
-        name="new-vault/index"
+        name="add/index"
         options={{
-          title: 'New Account Key',
           ...defaultOptions
         }}
       />
-      <Stack.Screen name="new-vault/new-vault-success" options={{ ...defaultOptions, title: '', headerBackVisible: false }} />
+      <Stack.Screen
+        name="edit/index"
+        options={{
+          ...defaultOptions
+        }}
+      />
+      <Stack.Screen
+        name="edit/edit-success"
+        options={{
+          ...defaultOptions
+        }}
+      />
+      <Stack.Screen
+        name="edit/remove-success"
+        options={{
+          ...defaultOptions
+        }}
+      />
+      <Stack.Screen name="add/new-vault-success" options={{ ...defaultOptions, title: '', headerBackVisible: false }} />
+      <Stack.Screen
+        name="add/new-vault-loading"
+        options={{
+          ...defaultOptions
+        }}
+      />
 
       {/* Import a vault stack */}
       <Stack.Screen name="option-phrase/enter-phrase" options={{ ...defaultOptions, title: 'Seed Phrase' }} />
-      <Stack.Screen name="option-phrase/enter-vault-name" options={{ ...defaultOptions, title: 'Master Key Name' }} />
-      {/* <Stack.Screen name="vault/new-vault/new-vault-success" options={{ ...defaultOptions, title: 'd' }} /> */}
     </Stack>
   )
 }

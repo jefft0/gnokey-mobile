@@ -2,13 +2,11 @@ import { Stack } from 'expo-router'
 
 export default function AppLayout() {
   const defaultOptions = {
-    headerTransparent: true,
-    headerShadowVisible: true,
+    headerTransparent: false,
+    headerShadowVisible: false,
     headerLargeTitleShadowVisible: false,
-    headerLargeStyle: {
-      backgroundColor: 'transparent'
-    },
-    headerLargeTitle: false
+    headerLargeTitle: false,
+    headerShown: false
   }
 
   return (
@@ -16,29 +14,73 @@ export default function AppLayout() {
       <Stack.Screen
         name="home"
         options={{
-          headerShown: false,
-          headerLargeTitle: true,
-          headerBackVisible: false
+          ...defaultOptions,
+          headerBackVisible: false,
+          headerShown: false
         }}
       />
       <Stack.Screen
         name="settings/index"
         options={{
-          title: 'Settings',
-          ...defaultOptions
+          ...defaultOptions,
+          headerBackVisible: false,
+          headerShown: false
         }}
       />
       <Stack.Screen
-        name="settings/change-network"
+        name="settings/security-center"
         options={{
-          title: 'Network',
-          ...defaultOptions
+          ...defaultOptions,
+          headerBackVisible: false,
+          headerShown: false
         }}
       />
       <Stack.Screen
-        name="(modal)/vault-detail-modal"
+        name="settings/developer-options"
         options={{
-          presentation: 'modal'
+          ...defaultOptions,
+          headerBackVisible: false,
+          headerShown: false
+        }}
+      />
+      <Stack.Screen
+        name="settings/change-master-pass"
+        options={{
+          ...defaultOptions,
+          headerBackVisible: false,
+          headerShown: false
+        }}
+      />
+      <Stack.Screen
+        name="settings/change-master-success"
+        options={{
+          ...defaultOptions,
+          headerBackVisible: false,
+          headerShown: false
+        }}
+      />
+      <Stack.Screen
+        name="network/list/index"
+        options={{
+          ...defaultOptions,
+          headerBackVisible: false,
+          headerShown: false
+        }}
+      />
+      <Stack.Screen
+        name="network/edit/[id]"
+        options={{
+          ...defaultOptions,
+          headerBackVisible: false,
+          headerShown: false
+        }}
+      />
+      <Stack.Screen
+        name="network/new/index"
+        options={{
+          ...defaultOptions,
+          headerBackVisible: false,
+          headerShown: true
         }}
       />
       <Stack.Screen
@@ -56,7 +98,7 @@ export default function AppLayout() {
         }}
       />
 
-      <Stack.Screen name="vault" options={{ title: 'Vaults', headerShown: false, presentation: 'modal' }} />
+      <Stack.Screen name="vault" options={{ headerShown: false }} />
     </Stack>
   )
 }

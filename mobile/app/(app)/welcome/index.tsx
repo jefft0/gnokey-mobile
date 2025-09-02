@@ -1,15 +1,19 @@
 import { useState } from 'react'
 import { useRouter } from 'expo-router'
-import { BetaVersionBanner } from '@/components/index'
 import { selectAction, useAppDispatch, useAppSelector, doSignIn } from '@/redux'
-import { OnboardingLayout, WelcomeBack, WelcomeBackFooter } from '@/modules/ui-components'
-import { WelcomeBackError } from '@/modules/ui-components/organisms/WelcomeBackError'
+import { HomeLayout, WelcomeBackFooter } from '@/modules/ui-components'
+import { BetaVersionHeader, HeroBox } from '@/modules/ui-components/molecules'
+import { KeyboardAvoidingView, Platform } from 'react-native'
+import { SlideImage } from '@/modules/ui-components/atoms'
+import { useKeyboard } from '@/hooks/useKeyboard'
 
 export default function Root() {
   const [error, setError] = useState<string | undefined>(undefined)
-  const route = useRouter()
+  const router = useRouter()
   const dispatch = useAppDispatch()
   const action = useAppSelector(selectAction)
+  const image = require('../../../assets/images/icon.png')
+  const { willShow } = useKeyboard()
 
   const onUnlockPress = async (masterPassword: string, isBiometric: boolean) => {
     try {
@@ -23,17 +27,25 @@ export default function Root() {
 
   const navigateTo = () => {
     if (action) {
-      route.replace(action)
+      router.replace(action)
     } else {
-      route.replace('/home')
+      router.replace('/home')
     }
   }
 
   return (
-    <OnboardingLayout>
-      <BetaVersionBanner />
-      {!error ? <WelcomeBack /> : <WelcomeBackError error={error} />}
-      <WelcomeBackFooter onUnlockPress={onUnlockPress} />
-    </OnboardingLayout>
+    <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+      <HomeLayout header={<BetaVersionHeader />} footer={<WelcomeBackFooter onUnlockPress={onUnlockPress} />}>
+        {!error ? (
+          <HeroBox
+            img={!willShow && <SlideImage source={image} resizeMode="contain" />}
+            title="Welcome back"
+            description="Enter your password to unlock GnoKey Mobile"
+          />
+        ) : (
+          <HeroBox title="Login Error" description={error} />
+        )}
+      </HomeLayout>
+    </KeyboardAvoidingView>
   )
 }

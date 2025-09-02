@@ -1,3 +1,5 @@
+import { KeyInfo } from '@gnolang/gnonative'
+
 type PostInterface = {
   user: User
   post: string
@@ -39,7 +41,7 @@ export interface GetJsonFollowingResult {
 }
 
 export type NetworkMetainfo = {
-  id: string
+  id: number
   chainId: string
   chainName: string
   rpcUrl: string
@@ -47,4 +49,23 @@ export type NetworkMetainfo = {
   faucetPortalUrl?: string
   active: boolean
   createdAt?: string
+}
+
+export type Vault = {
+  id: string
+  keyName: string
+  description?: string
+  bookmarked?: boolean
+  // chainIds: string // This is a JSON stringified array of chain IDs
+  // chains?: string[]
+  chain: NetworkMetainfo | null
+  /**
+   * SQLite date format is 'YYYY-MM-DD HH:mm:ss'
+   */
+  createdAt?: string
+  /**
+   * SQLite date format is 'YYYY-MM-DD HH:mm:ss'
+   */
+  updatedAt?: string
+  keyInfo: KeyInfo // KeyInfo is a type from GnoNative that contains information about the key
 }
