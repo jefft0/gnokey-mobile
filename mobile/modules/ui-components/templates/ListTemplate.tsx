@@ -1,7 +1,6 @@
 import React from 'react'
 import { FlatList, View } from 'react-native'
 import { GestureHandlerRootView } from 'react-native-gesture-handler'
-import { Ruller } from '../atoms'
 import { Spacer } from '../src'
 import { useTheme } from 'styled-components/native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
@@ -15,6 +14,7 @@ interface ListTemplateProps<T> {
   keyExtractor: (item: T) => string
   showsVerticalScrollIndicator?: boolean
   contentContainerStyle?: object
+  emptyComponent?: React.ComponentType<any> | React.ReactElement | null
 }
 
 export function ListTemplate<T>({
@@ -25,28 +25,29 @@ export function ListTemplate<T>({
   renderItem,
   keyExtractor,
   showsVerticalScrollIndicator = false,
-  contentContainerStyle = { paddingVertical: 10 }
+  contentContainerStyle = { paddingVertical: 10 },
+  emptyComponent = null
 }: ListTemplateProps<T>) {
   const theme = useTheme()
   const insets = useSafeAreaInsets()
   const paddingBottom = insets.bottom || 20
 
   return (
-    <GestureHandlerRootView style={{ flex: 1, backgroundColor: theme.colors.background }}>
+    <GestureHandlerRootView style={{ flex: 1 }}>
       {header}
-      <View style={{ paddingHorizontal: 20 }}>
+      <View style={{ flex: 1, paddingHorizontal: 20, backgroundColor: theme.colors.background }}>
         <Spacer space={16} />
         {subHeader}
+        <FlatList
+          data={data}
+          renderItem={renderItem}
+          keyExtractor={keyExtractor}
+          showsVerticalScrollIndicator={showsVerticalScrollIndicator}
+          contentContainerStyle={contentContainerStyle}
+          ListEmptyComponent={emptyComponent}
+        />
+        <View style={{ paddingBottom }}>{footer}</View>
       </View>
-      <FlatList
-        data={data}
-        renderItem={renderItem}
-        keyExtractor={keyExtractor}
-        showsVerticalScrollIndicator={showsVerticalScrollIndicator}
-        contentContainerStyle={contentContainerStyle}
-        ItemSeparatorComponent={() => <Ruller />}
-      />
-      <View style={{ paddingBottom, paddingHorizontal: 20 }}>{footer}</View>
     </GestureHandlerRootView>
   )
 }

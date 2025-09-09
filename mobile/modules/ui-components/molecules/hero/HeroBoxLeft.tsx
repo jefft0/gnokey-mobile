@@ -1,4 +1,3 @@
-import { useTheme } from 'styled-components/native'
 import { Spacer, Text } from '../../src'
 
 interface Props {
@@ -21,15 +20,12 @@ export const HeroBoxLeft = ({ title, description }: Props) => {
 }
 
 export const HeroBoxInternal = ({ title, description }: Props) => {
-  const theme = useTheme()
   return (
     <>
       <Spacer space={16} />
       <Text.Title2 style={{ textAlign: 'left' }}>{title}</Text.Title2>
       <Spacer space={8} />
-      <Text.Title3 color={theme.text.textMuted} weight={Text.weights.regular} style={{ textAlign: 'left' }}>
-        {description}
-      </Text.Title3>
+      <Text.Title3_Muted style={{ textAlign: 'left' }}>{description}</Text.Title3_Muted>
     </>
   )
 }

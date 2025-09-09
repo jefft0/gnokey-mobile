@@ -1,5 +1,6 @@
-import { Layout } from '@/components'
-import VaultListItem from '@/components/list/vault-list/VaultListItem'
+import { useCallback, useEffect } from 'react'
+import { router, useNavigation } from 'expo-router'
+import * as Linking from 'expo-linking'
 import {
   clearLinking,
   selectCallback,
@@ -11,17 +12,11 @@ import {
   fetchVaults,
   checkForKeyOnChains
 } from '@/redux'
-import { router, useNavigation } from 'expo-router'
-import { useCallback, useEffect, useState } from 'react'
-import { FlatList } from 'react-native'
-import * as Linking from 'expo-linking'
-import { Button, Container, SafeAreaView, Spacer, Text } from '@/modules/ui-components'
+import { ListTemplate, ScreenHeader, NetworkButtonModal, VaultListItem, Form, HeroBoxLeft } from '@/modules/ui-components'
 import { Vault } from '@/types'
-import { BetaVersionMiniBanner } from '@/modules/ui-components/molecules'
+import { View } from 'react-native'
 
 export default function Page() {
-  const [loading, setLoading] = useState<string | undefined>(undefined)
-
   const navigation = useNavigation()
   const dispatch = useAppDispatch()
 
@@ -32,16 +27,12 @@ export default function Page() {
   useEffect(() => {
     const unsubscribe = navigation.addListener('focus', async () => {
       try {
-        setLoading('Loading accounts...')
-
         if (!vaults || vaults.length === 0) {
           await dispatch(fetchVaults()).unwrap()
           dispatch(checkForKeyOnChains()).unwrap()
         }
       } catch (error: unknown | Error) {
         console.error(error)
-      } finally {
-        setLoading(undefined)
       }
     })
     return unsubscribe
@@ -65,28 +56,22 @@ export default function Page() {
   }
 
   return (
-    <>
-      <Container>
-        <SafeAreaView>
-          <BetaVersionMiniBanner />
-          <Layout.BodyAlignedBotton>
-            <Text.H3>Select a key to sign in into {clientName}</Text.H3>
-            <Spacer space={16} />
-
-            {vaults && (
-              <FlatList
-                data={vaults}
-                renderItem={({ item }) => <VaultListItem vault={item} onVaultPress={returnKeyAddressToSoliciting} />}
-                keyExtractor={(item) => item.keyInfo.name}
-                ListEmptyComponent={<Text.Body>There are no items to list.</Text.Body>}
-              />
-            )}
-            <Button color="primary" onPress={onCancel} loading={loading !== undefined}>
-              Cancel
-            </Button>
-          </Layout.BodyAlignedBotton>
-        </SafeAreaView>
-      </Container>
-    </>
+    <ListTemplate<Vault>
+      contentContainerStyle={{ flexGrow: 1 }}
+      header={<ScreenHeader title="Sign In" rightComponent={<NetworkButtonModal />} onBackPress={onCancel} />}
+      subHeader={vaults && vaults.length > 0 ? <Form.Section title={`Select an account to sign in to ${clientName}`} /> : null}
+      footer={null}
+      data={vaults || []}
+      renderItem={({ item }) => (
+        <VaultListItem style={{ paddingHorizontal: 20 }} vault={item} onVaultPress={returnKeyAddressToSoliciting} />
+      )}
+      emptyComponent={
+        <HeroBoxLeft
+          title="No Accounts"
+          description={`You don't have any accounts yet on this network to sign in to ${clientName}.`}
+        />
+      }
+      keyExtractor={(item) => item.keyInfo.name}
+    />
   )
 }
