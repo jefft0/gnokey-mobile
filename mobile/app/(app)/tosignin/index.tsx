@@ -14,7 +14,6 @@ import {
 } from '@/redux'
 import { ListTemplate, ScreenHeader, NetworkButtonModal, VaultListItem, Form, HeroBoxLeft } from '@/modules/ui-components'
 import { Vault } from '@/types'
-import { View } from 'react-native'
 
 export default function Page() {
   const navigation = useNavigation()
@@ -40,8 +39,8 @@ export default function Page() {
   }, [navigation])
 
   const returnKeyAddressToSoliciting = useCallback(
-    async (keyInfo: Vault) => {
-      await dispatch(sendAddressToSoliciting({ keyInfo: keyInfo.keyInfo })).unwrap()
+    async (vault: Vault) => {
+      await dispatch(sendAddressToSoliciting({ vault })).unwrap()
 
       router.push('/home')
     },

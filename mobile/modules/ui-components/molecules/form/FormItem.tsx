@@ -1,37 +1,50 @@
-import styled from 'styled-components/native'
 import React from 'react'
-import { StyleProp, TextStyle } from 'react-native'
+import { StyleProp, TextStyle, View } from 'react-native'
+import styled from 'styled-components/native'
 import { Text } from '../../src'
+import { ListRow } from '../../atoms/list/ListRow'
 
 type Props = {
   label: string
+  value?: string | number | React.ReactNode
   labelStyle?: StyleProp<TextStyle> | undefined
-} & React.ComponentProps<typeof Container>
+  linkStyle?: boolean
+} & React.ComponentProps<typeof ListRow>
 
-export const FormItem: React.FC<Props> = ({ children, label, labelStyle = { fontWeight: 500 }, ...props }) => {
+export const FormItem: React.FC<Props> = ({
+  children,
+  label,
+  value,
+  linkStyle,
+  labelStyle = { fontWeight: 500, minWidth: 140 },
+  ...props
+}) => {
   return (
-    <Container {...props}>
-      <TextLabel style={labelStyle}>{label}</TextLabel>
-      {children}
-    </Container>
+    <>
+      <ListRow {...props}>
+        <Text.Body style={labelStyle}>{label}</Text.Body>
+        {value !== undefined && <ValueContent linkStyle={linkStyle}>{value}</ValueContent>}
+      </ListRow>
+      {children && <View style={{ marginBottom: 12 }}>{children}</View>}
+    </>
   )
+}
+
+const ValueContent = ({ children, linkStyle }: { children: React.ReactNode; linkStyle?: boolean }) => {
+  if (linkStyle) {
+    return (
+      <Text.LinkText weight="500" style={{ flexShrink: 1, textAlign: 'right' }}>
+        {children}
+      </Text.LinkText>
+    )
+  }
+  return <Text.Body_Bold style={{ flexShrink: 1 }}>{children}</Text.Body_Bold>
 }
 
 export const FormItemInline = styled(FormItem)`
   flex-direction: row;
   align-items: center;
   justify-content: space-between;
-`
-
-const TextLabel = styled(Text.Body)`
-  padding-bottom: 4px;
-`
-
-const Container = styled.View`
-  align-items: flex-start;
-  border-radius: ${({ theme }) => theme.borderRadius - 12}px;
-  color: ${({ theme }) => theme.colors.black};
-  background-color: ${({ theme }) => theme.textinputs.background};
 `
 
 export const FormTextValue = styled.Text`
