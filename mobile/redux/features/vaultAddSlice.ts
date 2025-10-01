@@ -20,29 +20,150 @@ export enum VaultCreationState {
 }
 
 export interface VaultAddState {
+  form: {
+    /** The name of the vault */
+    keyName: string
+    /** An optional description for the vault */
+    description: string
+  }
   signUpState?: VaultCreationState
   newAccount?: KeyInfo
   existingAccount?: KeyInfo
-  selectedChain?: NetworkMetainfo // The chain selected by the user during onboarding
+  /** The chain selected by the user during onboarding */
+  selectedChain?: NetworkMetainfo
   loading: boolean
   progress: string[]
   registerAccount: boolean
-  keyName?: string
-  description?: string
   phrase?: string
 }
 
 const initialState: VaultAddState = {
+  form: {
+    keyName: '',
+    description: ''
+  },
+  phrase: '',
   signUpState: undefined,
   newAccount: undefined,
   existingAccount: undefined,
   selectedChain: undefined,
   loading: false,
-  keyName: '',
-  description: '',
   progress: [],
   registerAccount: false
 }
+
+export const vaultAddSlice = createSlice({
+  name: 'vaultAdd',
+  initialState,
+  reducers: {
+    setAddVaultFormField: (state, action) => {
+      const { field, value } = action.payload
+      state.form = {
+        ...state.form,
+        [field]: value
+      }
+    },
+    setPhrase: (state, action: PayloadAction<string>) => {
+      state.phrase = action.payload
+    },
+    signUpState: (state, action: PayloadAction<VaultCreationState>) => {
+      state.signUpState = action.payload
+    },
+    addProgress: (state, action: PayloadAction<string>) => {
+      console.log('progress--->', action.payload)
+      state.progress = [...state.progress, '' + action.payload]
+    },
+    clearProgress: (state) => {
+      state.progress = []
+    },
+    setRegisterAccount: (state, action: PayloadAction<boolean>) => {
+      state.registerAccount = action.payload
+    },
+    setSelectedChain: (state, action: PayloadAction<NetworkMetainfo | undefined>) => {
+      state.selectedChain = action.payload
+    },
+    resetAddVaultState: (state) => {
+      state.form = { ...initialState.form }
+      state = { ...initialState }
+    }
+  },
+  extraReducers(builder) {
+    builder
+      .addCase(createKey.rejected, (state, action) => {
+        if (action.error.message) {
+          state.progress = [...state.progress, action.error.message]
+        }
+        state.loading = false
+        state.signUpState = VaultCreationState.generic_error
+        console.error('signUp.rejected', action)
+      })
+      .addCase(createKey.pending, (state) => {
+        state.loading = true
+        state.progress = []
+        state.signUpState = undefined
+      })
+      .addCase(createKey.fulfilled, (state, action) => {
+        state.loading = false
+        state.newAccount = action.payload?.newAccount
+        state.existingAccount = action.payload?.existingAccount
+        state.signUpState = action.payload?.state
+      })
+      .addCase(registerAccount.pending, (state) => {
+        state.loading = true
+      })
+      .addCase(registerAccount.rejected, (state, _) => {
+        state.loading = false
+      })
+      .addCase(registerAccount.fulfilled, (state, action) => {
+        state.loading = false
+        state.newAccount = action.payload?.newAccount
+        state.existingAccount = action.payload?.existingAccount
+        state.signUpState = action.payload?.state
+      })
+      .addCase(generateNewPhrase.fulfilled, (state, action) => {
+        state.phrase = action.payload.phrase
+      })
+  },
+
+  selectors: {
+    selectLoadingAddVault: (state) => state.loading,
+    selectProgress: (state) => state.progress,
+    signUpStateSelector: (state) => state.signUpState,
+    newAccountSelector: (state) => state.newAccount,
+    existingAccountSelector: (state) => state.existingAccount,
+    selectRegisterAccount: (state) => state.registerAccount,
+    selectPhrase: (state) => state.phrase,
+    selectLastProgress: (state) => state.progress[state.progress.length - 1],
+    selectSelectedChain: (state) => state.selectedChain,
+    selectAddVaultName: (state) => state.form.keyName,
+    selectAddVaultDescription: (state) => state.form.description
+  }
+})
+
+export const {
+  setAddVaultFormField,
+  addProgress,
+  signUpState,
+  clearProgress,
+  setRegisterAccount,
+  resetAddVaultState,
+  setPhrase,
+  setSelectedChain
+} = vaultAddSlice.actions
+
+export const {
+  selectLoadingAddVault,
+  selectProgress,
+  selectLastProgress,
+  signUpStateSelector,
+  newAccountSelector,
+  existingAccountSelector,
+  selectRegisterAccount,
+  selectPhrase,
+  selectSelectedChain,
+  selectAddVaultName,
+  selectAddVaultDescription
+} = vaultAddSlice.selectors
 
 interface SignUpParam {
   name: string
@@ -69,7 +190,10 @@ type SignUpResponse = { newAccount?: KeyInfo; existingAccount?: KeyInfo; state: 
  */
 export const createKey = createAsyncThunk<SignUpResponse, SignUpParam, ThunkExtra>('user/createKey', async (param, thunkAPI) => {
   const { name, password, phrase } = param
-  const { selectedChain, description } = (thunkAPI.getState() as RootState).vaultAdd
+  const {
+    selectedChain,
+    form: { description }
+  } = (thunkAPI.getState() as RootState).vaultAdd
   const gnonative = thunkAPI.extra.gnonative as GnoNativeApi
   console.log('selectedChain', selectedChain)
 
@@ -115,19 +239,19 @@ export const createKey = createAsyncThunk<SignUpResponse, SignUpParam, ThunkExtr
     thunkAPI.dispatch(addProgress(`Error checking blockchain: ${error.message}`))
     throw new Error(`Error checking blockchain: ${error.message}`)
   }
-  const blockchainUser = await checkForUserOnBlockchain(byNameStrEval, gnonative, name, phrase)
-  console.log(`blockchainUser: "${JSON.stringify(blockchainUser)}"`)
+  const blockchainUserCheckResult = await checkForUserOnBlockchain(byNameStrEval, gnonative, name, phrase)
+  console.log(`blockchainUser: "${JSON.stringify(blockchainUserCheckResult)}"`)
 
   thunkAPI.dispatch(addProgress(`Checking if "${name}" is already on local storage...`))
   const userOnLocalStorage = await checkForUserOnLocalStorage(gnonative, name)
   console.log(`userOnLocalStorage: ${JSON.stringify(userOnLocalStorage)}`)
 
   if (userOnLocalStorage) {
-    if (blockchainUser) {
+    if (blockchainUserCheckResult) {
       const localAddress = await gnonative.addressToBech32(userOnLocalStorage.address)
-      thunkAPI.dispatch(addProgress(`Local address "${localAddress}", Blockchain address "${blockchainUser.address}"`))
+      thunkAPI.dispatch(addProgress(`Local address "${localAddress}", Blockchain address "${blockchainUserCheckResult.address}"`))
 
-      if (blockchainUser.address === localAddress) {
+      if (blockchainUserCheckResult.address === localAddress) {
         thunkAPI.dispatch(addProgress(`User exists on both blockchain and local storage.`))
         // CASE 1.0: Offer to do normal signin, or choose new name
         return { newAccount: undefined, state: VaultCreationState.user_exists_on_blockchain_and_local_storage }
@@ -146,12 +270,12 @@ export const createKey = createAsyncThunk<SignUpResponse, SignUpParam, ThunkExtr
       }
     }
   } else {
-    if (blockchainUser) {
+    if (blockchainUserCheckResult) {
       // This name is already registered on the blockchain.
       // CASE 2.0: Offer to rename keystoreInfoByAddr.name to name in keystore (password check), and do signin
       // CASE 2.1: "This name is already registered on the blockchain. Please choose another name."
-      thunkAPI.dispatch(addProgress(blockchainUser.state))
-      return { newAccount: undefined, state: blockchainUser.state }
+      thunkAPI.dispatch(addProgress(blockchainUserCheckResult.state))
+      return { newAccount: undefined, state: blockchainUserCheckResult.state }
     }
 
     // Proceed to create the account.
@@ -206,7 +330,7 @@ export const registerAccount = createAsyncThunk<SignUpResponse, void, ThunkExtra
     console.log(`hasBalance: ${hasBalance}`)
 
     if (hasBalance) {
-      thunkAPI.dispatch(addProgress(`registering account on chain`))
+      thunkAPI.dispatch(addProgress(`registering account on chain, using existing balance`))
       await registerOnChain(gnonative, account)
       thunkAPI.dispatch(addProgress(`account_registered`))
       return { newAccount, state: VaultCreationState.account_registered }
@@ -214,7 +338,7 @@ export const registerAccount = createAsyncThunk<SignUpResponse, void, ThunkExtra
       thunkAPI.dispatch(addProgress(`sending coins on ${currentChain.chainName} faucet`))
       const response = await sendCoins(address_bech32, currentChain.faucetUrl)
       console.log(`coins sent, response: ${JSON.stringify(await response.json())}`)
-      thunkAPI.dispatch(addProgress(`registering account on chain`))
+      thunkAPI.dispatch(addProgress(`registering account on chain, using faucet funds`))
       await registerOnChain(gnonative, account)
       thunkAPI.dispatch(addProgress(`account registered`))
       return { newAccount, state: VaultCreationState.account_registered }
@@ -275,8 +399,12 @@ const checkForUserOnBlockchain = async (
 
     const accountNameStr = await gnonative.qEval('gno.land/r/sys/users', `ResolveAddress("${addressBech32}")`)
     console.log('GetUserByAddress result:', accountNameStr)
-    const accountName = accountNameStr.match(/\("(\w+)"/)?.[1]
-    console.log('GetUserByAddress after regex', accountName)
+
+    const matches = [...accountNameStr.matchAll(/\("([^"]+)"/g)]
+    const key = matches[0]?.[1]
+    const accountName = matches[1]?.[1]
+    console.log('existing key:', key)
+    console.log('existing account name:', accountName)
 
     if (accountName) {
       console.log('user KEY already exists on the blockchain under name %s', accountName)
@@ -402,123 +530,3 @@ export const checkPhrase = createAsyncThunk<CheckPhraseResponse, void, ThunkExtr
     return { message: 'Valid seed phrase', invalid: false }
   }
 )
-
-export const vaultAddSlice = createSlice({
-  name: 'vaultAdd',
-  initialState,
-  reducers: {
-    setPhrase: (state, action: PayloadAction<string>) => {
-      state.phrase = action.payload
-    },
-    signUpState: (state, action: PayloadAction<VaultCreationState>) => {
-      state.signUpState = action.payload
-    },
-    addProgress: (state, action: PayloadAction<string>) => {
-      console.log('progress--->', action.payload)
-      state.progress = [...state.progress, '' + action.payload]
-    },
-    clearProgress: (state) => {
-      state.progress = []
-    },
-    setRegisterAccount: (state, action: PayloadAction<boolean>) => {
-      state.registerAccount = action.payload
-    },
-    setKeyName: (state, action: PayloadAction<string>) => {
-      state.keyName = action.payload
-    },
-    setDescription: (state, action: PayloadAction<string>) => {
-      state.description = action.payload
-    },
-    setSelectedChain: (state, action: PayloadAction<NetworkMetainfo | undefined>) => {
-      state.selectedChain = action.payload
-    },
-    resetState: (state) => {
-      state.loading = false
-      state.newAccount = undefined
-      state.existingAccount = undefined
-      state.signUpState = undefined
-      state.selectedChain = undefined
-      state.description = ''
-      state.progress = []
-      state.keyName = ''
-      state.phrase = ''
-    }
-  },
-  extraReducers(builder) {
-    builder
-      .addCase(createKey.rejected, (state, action) => {
-        if (action.error.message) {
-          state.progress = [...state.progress, action.error.message]
-        }
-        state.loading = false
-        state.signUpState = VaultCreationState.generic_error
-        console.error('signUp.rejected', action)
-      })
-      .addCase(createKey.pending, (state) => {
-        state.loading = true
-        state.progress = []
-        state.signUpState = undefined
-      })
-      .addCase(createKey.fulfilled, (state, action) => {
-        state.loading = false
-        state.newAccount = action.payload?.newAccount
-        state.existingAccount = action.payload?.existingAccount
-        state.signUpState = action.payload?.state
-      })
-      .addCase(registerAccount.pending, (state) => {
-        state.loading = true
-      })
-      .addCase(registerAccount.rejected, (state, _) => {
-        state.loading = false
-      })
-      .addCase(registerAccount.fulfilled, (state, action) => {
-        state.loading = false
-        state.newAccount = action.payload?.newAccount
-        state.existingAccount = action.payload?.existingAccount
-        state.signUpState = action.payload?.state
-      })
-      .addCase(generateNewPhrase.fulfilled, (state, action) => {
-        state.phrase = action.payload.phrase
-      })
-  },
-
-  selectors: {
-    selectLoadingAddVault: (state) => state.loading,
-    selectProgress: (state) => state.progress,
-    signUpStateSelector: (state) => state.signUpState,
-    newAccountSelector: (state) => state.newAccount,
-    existingAccountSelector: (state) => state.existingAccount,
-    selectRegisterAccount: (state) => state.registerAccount,
-    selectKeyName: (state) => state.keyName,
-    selectPhrase: (state) => state.phrase,
-    selectLastProgress: (state) => state.progress[state.progress.length - 1],
-    selectSelectedChain: (state) => state.selectedChain,
-    selectDescription: (state) => state.description
-  }
-})
-
-export const {
-  addProgress,
-  signUpState,
-  clearProgress,
-  setRegisterAccount,
-  setKeyName,
-  resetState,
-  setPhrase,
-  setSelectedChain,
-  setDescription
-} = vaultAddSlice.actions
-
-export const {
-  selectLoadingAddVault,
-  selectProgress,
-  selectLastProgress,
-  signUpStateSelector,
-  newAccountSelector,
-  existingAccountSelector,
-  selectRegisterAccount,
-  selectKeyName,
-  selectPhrase,
-  selectSelectedChain,
-  selectDescription
-} = vaultAddSlice.selectors

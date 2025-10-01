@@ -22,15 +22,14 @@ import { ScrollView, View, TouchableOpacity, ActivityIndicator } from 'react-nat
 import {
   Button,
   FormItem,
-  FormItemInline,
   HomeLayout,
   ScreenHeader,
   Spacer,
   Text,
   BetaVersionMiniBanner,
-  Ruller
+  Ruller,
+  CopyIcon
 } from '@/modules/ui-components'
-import styled from 'styled-components/native'
 
 export default function Page() {
   const dispatch = useAppDispatch()
@@ -173,50 +172,62 @@ export default function Page() {
             <Text.Title3 weight="400">{`${clientName} is requiring permission to ${reason}`}</Text.Title3>
             <Spacer space={24} />
 
-            <ScrollView contentContainerStyle={{}}>
+            <ScrollView>
               <Ruller />
-              {/* <Text.BodyCenterGray>CLIENT INFORMATION</Text.BodyCenterGray> */}
-              <FormItem label="Client name" value={clientName} />
+              <FormItem label="Client" value={clientName} />
               <Ruller />
-              <FormItemInline
+              <FormItem
                 label="Gas Wanted"
                 value={gasWanted ? <Text.Body_Bold>{gasWanted?.toString()}</Text.Body_Bold> : <ActivityIndicator />}
               />
               <Ruller />
-              <FormItem label="Reason" value={reason} />
+              <FormItem label="Reason" copyTextValue={reason} value={reason} />
               <Ruller />
-              <FormItem label="Callback" value={callback} />
+              <FormItem label="Callback" copyTextValue={callback} value={callback} />
               <Ruller />
-              <FormItem label="Address">
-                <LinkJsonText style={{ textAlign: 'right' }}>{`${bech32Address}`}</LinkJsonText>
-              </FormItem>
+              <FormItem
+                label="Address"
+                copyTextValue={bech32Address}
+                value={
+                  <>
+                    <Text.Json>{bech32Address}</Text.Json>
+                    <CopyIcon />
+                  </>
+                }
+              />
               <Ruller />
-              <FormItem label="Account Name" value={JSON.stringify(keyInfo?.name)} />
+              <FormItem label="Account" copyTextValue={keyInfo?.name} value={keyInfo?.name} />
               <Ruller />
-              <FormItem label="Chain ID" value={chainId} />
+              <FormItem label="Chain ID" copyTextValue={chainId} value={chainId} />
               <Ruller />
-              <FormItem label="Remote" value={remote} linkStyle />
+              <FormItem label="Remote" copyTextValue={remote} value={<Text.Json>{remote}</Text.Json>} />
               <Ruller />
-
               <HiddenGroup>
-                <FormItem label="Raw Tx Data">
-                  <LinkJsonText>{txInput}</LinkJsonText>
-                </FormItem>
+                <FormItem
+                  label="Raw Tx"
+                  copyTextValue={txInput}
+                  value={
+                    <>
+                      <Text.Json>{txInput}</Text.Json>
+                      <CopyIcon />
+                    </>
+                  }
+                />
                 <Ruller />
-                <FormItem label="Raw Signed Data">
-                  {signedTx ? <LinkJsonText>{signedTx?.toString()}</LinkJsonText> : <ActivityIndicator />}
-                </FormItem>
-                {/* <FormItem label="Session wanted">
-                <TextBodyWhite>{JSON.stringify(sessionWanted)}</TextBodyWhite>
-              </FormItem>
-              <Ruller />
-              <FormItem label="Session">
-                <TextBodyWhite>{session ? JSON.stringify(session) : 'undefined'}</TextBodyWhite>
-              </FormItem>
-              <Ruller />
-              <FormItem label="Realms Allowed">
-                <TextBodyWhite>gno.land/r/berty/social</TextBodyWhite>
-              </FormItem>*/}
+                <FormItem
+                  label="Signed Tx"
+                  copyTextValue={signedTx}
+                  value={
+                    signedTx ? (
+                      <>
+                        <Text.Json>{signedTx?.toString()}</Text.Json>
+                        <CopyIcon />
+                      </>
+                    ) : (
+                      <ActivityIndicator />
+                    )
+                  }
+                />
               </HiddenGroup>
             </ScrollView>
           </>
@@ -225,11 +236,6 @@ export default function Page() {
     </>
   )
 }
-
-const LinkJsonText = styled(Text.LinkText)`
-  weight: 500;
-  flex-shrink: 1;
-`
 
 const HiddenGroup = ({ children }: React.PropsWithChildren) => {
   const [visible, setVisible] = useState(false)
