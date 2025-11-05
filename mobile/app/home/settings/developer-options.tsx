@@ -37,11 +37,6 @@ const Page: React.FC = () => {
         <Spacer space={16} />
         <Form.Section title="Developer Options">
           <Form.Link
-            onPress={() => router.navigate('/home/(modal)/change-master-pass')}
-            title="Change master password"
-            description="Update your master password to keep your account secure."
-          />
-          <Form.Link
             onPress={() => deleteDatabase()}
             title="Delete Database"
             description="Permanently delete all data stored in the app."
