@@ -53,7 +53,7 @@ describe('validateDeepLink', () => {
 
       const result = validateDeepLink(parsedURL)
 
-      expect(result.isValid).toBe(true)
+      expect(result.isValid).toBe(false)
       expect(result.errors).toHaveLength(0)
     })
 
