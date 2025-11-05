@@ -10,7 +10,6 @@ on:
 
 jobs:
   run-linter-prettier:
-    name: Check if code is formatted
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
