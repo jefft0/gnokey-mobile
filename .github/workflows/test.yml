@@ -1,4 +1,4 @@
-name: Check if code is formatted
+name: Run make test
 
 on:
   push:
@@ -9,7 +9,7 @@ on:
       - main
 
 jobs:
-  run-linter-prettier:
+  run-tests:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -35,14 +35,6 @@ jobs:
         working-directory: mobile
         run: npm ci
 
-      - name: Run ts:check
+      - name: Run make test
         working-directory: mobile
-        run: npm run ts:check
-
-      - name: Run lint
-        working-directory: mobile
-        run: npm run lint
-
-      - name: Run prettier:fix
-        working-directory: mobile
-        run: npx prettier .
+        run: make test
