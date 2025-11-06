@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { router } from 'expo-router'
 import * as Linking from 'expo-linking'
 import {
-  estimateGasWantedAndSign,
+  estimateTxFeeAndSign,
   selectClientName,
   selectBech32Address,
   selectTxInput,
@@ -14,7 +14,7 @@ import {
   selectChainId,
   selectRemote,
   selectSignedTx,
-  selectGasWanted,
+  selectTxFee,
   selectLinkIsLoading
 } from '@/redux'
 import { useGnoNativeContext } from '@gnolang/gnonative'
@@ -28,6 +28,7 @@ import {
   Text,
   BetaVersionMiniBanner,
   Ruller,
+  formatter,
   CopyIcon
 } from '@/modules/ui-components'
 
@@ -44,7 +45,7 @@ export default function Page() {
   const chainId = useAppSelector(selectChainId)
   const remote = useAppSelector(selectRemote)
   const signedTx = useAppSelector(selectSignedTx)
-  const gasWanted = useAppSelector(selectGasWanted)
+  const txFee = useAppSelector(selectTxFee)
   const isLoading = useAppSelector(selectLinkIsLoading)
 
   const [gnonativeReady, setGnonativeReady] = useState(false)
@@ -79,7 +80,7 @@ export default function Page() {
 
         // need to pause to let the Keybase DB close before using it again
         // await new Promise((f) => setTimeout(f, 2000))
-        await dispatch(estimateGasWantedAndSign()).unwrap()
+        await dispatch(estimateTxFeeAndSign()).unwrap()
       } catch (error: unknown | Error) {
         console.error(error)
       }
@@ -144,9 +145,15 @@ export default function Page() {
               <FormItem label="Client" labelStyle={{ minWidth: 120 }} value={clientName} />
               <Ruller />
               <FormItem
-                label="Gas Wanted"
+                label="Tx Fee"
                 labelStyle={{ minWidth: 120 }}
-                value={gasWanted ? <Text.Body_Bold>{gasWanted?.toString()}</Text.Body_Bold> : <ActivityIndicator />}
+                value={
+                  txFee ? (
+                    <Text.Body_Bold>{`${formatter.balance(txFee)} GNOT (estimated)`}</Text.Body_Bold>
+                  ) : (
+                    <ActivityIndicator />
+                  )
+                }
               />
               <Ruller />
               <FormItem label="Reason" labelStyle={{ minWidth: 120 }} copyTextValue={reason} value={reason} />

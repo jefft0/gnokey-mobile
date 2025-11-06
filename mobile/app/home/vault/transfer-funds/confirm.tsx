@@ -1,6 +1,6 @@
 import { Button, FormItem, HomeLayout, Ruller, ScreenHeader, Spacer, formatter } from '@/modules/ui-components'
 import {
-  selectTxGasWanted,
+  selectTransactionFee,
   selectVaultToEditWithBalance,
   useAppDispatch,
   useAppSelector,
@@ -11,7 +11,7 @@ import { useRouter } from 'expo-router'
 import { ScrollView } from 'react-native'
 
 const Page = () => {
-  const txGasWanted = useAppSelector(selectTxGasWanted)
+  const txFee = useAppSelector(selectTransactionFee)
   const dispatch = useAppDispatch()
   const vault = useAppSelector(selectVaultToEditWithBalance)
   const form = useAppSelector(selectTxForm)
@@ -19,7 +19,7 @@ const Page = () => {
 
   const broadcastTransfer = async () => {
     console.log('Broadcasting transactionx...')
-    if (!txGasWanted || !vault) return
+    if (!txFee || !vault) return
     try {
       console.log('Broadcasting transaction...')
       await dispatch(txBroadcast({ fromAddress: vault.keyInfo.address })).unwrap()
@@ -33,8 +33,8 @@ const Page = () => {
     <HomeLayout
       header={<ScreenHeader title="Summary" />}
       footer={
-        <Button onPress={broadcastTransfer} color="primary" disabled={!txGasWanted}>
-          {txGasWanted ? 'Confirm' : 'Loading...'}
+        <Button onPress={broadcastTransfer} color="primary" disabled={!txFee}>
+          {txFee ? 'Confirm' : 'Loading...'}
         </Button>
       }
     >
@@ -49,7 +49,7 @@ const Page = () => {
         <Ruller spacer={4} />
         <FormItem label="Amount" value={`${form.amount} GNOT`} />
         <Ruller spacer={4} />
-        <FormItem label="Gas Fee" value={`${formatter.balance(txGasWanted)} GNOT (estimated)`} />
+        <FormItem label="Tx Fee" value={`${formatter.balance(txFee)} GNOT (estimated)`} />
         <Ruller spacer={4} />
         <FormItem label="Memo" value={form.memo} />
         <Ruller spacer={4} />

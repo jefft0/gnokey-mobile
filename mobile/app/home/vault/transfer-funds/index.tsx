@@ -1,7 +1,7 @@
 import { Button, HomeLayout, ScreenHeader, Spacer, Text, TextInputLabel, VaultItem } from '@/modules/ui-components'
 import TextFieldForm from '@/modules/ui-components/organisms/input/TextFieldForm'
 import {
-  txGasFeeEstimation,
+  txFeeEstimation,
   selectVaultToEditWithBalance,
   useAppSelector,
   selectTxFormMemo,
@@ -30,7 +30,7 @@ const Page = () => {
   const prepareTransfer = () => {
     if (!vault) return
     try {
-      dispatch(txGasFeeEstimation())
+      dispatch(txFeeEstimation())
       router.push('/home/vault/transfer-funds/confirm')
     } catch (error) {
       console.error('Transfer failed:', error)
