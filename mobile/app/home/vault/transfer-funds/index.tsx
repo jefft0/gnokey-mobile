@@ -1,5 +1,6 @@
-import { Button, HomeLayout, ScreenHeader, Spacer, Text, TextInputLabel, VaultItem } from '@/modules/ui-components'
-import TextFieldForm from '@/modules/ui-components/organisms/input/TextFieldForm'
+import { ScreenHeader, TextInputLabel, VaultItem, TextFieldForm } from '@/components'
+import { Button, Spacer, HomeLayout } from '@berty/gnonative-ui'
+import { Text } from '@berty/gnonative-ui'
 import {
   txFeeEstimation,
   selectVaultToEditWithBalance,

@@ -1,4 +1,5 @@
-import { Button, FormItem, HomeLayout, Ruller, ScreenHeader, Spacer, formatter } from '@/modules/ui-components'
+import { ScreenHeader, formatter } from '@/components'
+import { Ruller, Button, Spacer, HomeLayout, FormItem } from '@berty/gnonative-ui'
 import {
   selectTransactionFee,
   selectVaultToEditWithBalance,

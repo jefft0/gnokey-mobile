@@ -19,18 +19,9 @@ import {
 } from '@/redux'
 import { useGnoNativeContext } from '@gnolang/gnonative'
 import { ScrollView, View, TouchableOpacity, ActivityIndicator } from 'react-native'
-import {
-  Button,
-  FormItem,
-  HomeLayout,
-  ScreenHeader,
-  Spacer,
-  Text,
-  BetaVersionMiniBanner,
-  Ruller,
-  formatter,
-  CopyIcon
-} from '@/modules/ui-components'
+import { FormItem } from '@berty/gnonative-ui'
+import { Text, Spacer, Ruller, Button, HomeLayout } from '@berty/gnonative-ui'
+import { Icons, ScreenHeader, BetaVersionMiniBanner, formatter } from '@/components'
 
 export default function Page() {
   const dispatch = useAppDispatch()
@@ -167,7 +158,7 @@ export default function Page() {
                 value={
                   <>
                     <Text.Json>{bech32Address}</Text.Json>
-                    <CopyIcon />
+                    <Icons.CopyIcon />
                   </>
                 }
               />
@@ -191,7 +182,7 @@ export default function Page() {
                   value={
                     <>
                       <Text.Json>{txInput}</Text.Json>
-                      <CopyIcon />
+                      <Icons.CopyIcon />
                     </>
                   }
                 />
@@ -204,7 +195,7 @@ export default function Page() {
                     signedTx ? (
                       <>
                         <Text.Json>{signedTx?.toString()}</Text.Json>
-                        <CopyIcon />
+                        <Icons.CopyIcon />
                       </>
                     ) : (
                       <ActivityIndicator />

@@ -1,4 +1,4 @@
-import { HomeLayout, ActivityIndicator, ButtonBack, HeroBox, ErrorBox } from '@/modules/ui-components'
+import { HomeLayout, HeroBox } from '@berty/gnonative-ui'
 import {
   registerAccount,
   selectLastProgress,
@@ -10,6 +10,7 @@ import {
 } from '@/redux'
 import { useCallback, useEffect, useState } from 'react'
 import { useLocalSearchParams, useRouter } from 'expo-router'
+import { ButtonBack, ErrorBox, ActivityIndicator } from '@/components'
 
 const Page = () => {
   const signUpState = useAppSelector(signUpStateSelector)

@@ -1,9 +1,8 @@
 import { useRouter } from 'expo-router'
-import { CheckPassRequirements, HomeLayout, ScreenHeader, TextFieldSecure, TextInputLabel } from '@/modules/ui-components'
+import { CheckPassRequirements, ScreenHeader, TextFieldSecure, TextInputLabel, TextInputDescription, Alert } from '@/components'
 import { useState } from 'react'
 import { selectMasterPassword, useAppSelector, useAppDispatch, changeMasterPassword } from '@/redux'
-import { Alert, Button, Spacer } from '@/modules/ui-components'
-import { TextInputDescription } from '@/modules/ui-components/atoms/input/TextInputDescription'
+import { Spacer, HomeLayout, Button } from '@berty/gnonative-ui'
 
 const Page = () => {
   const router = useRouter()

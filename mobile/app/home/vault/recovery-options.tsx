@@ -1,10 +1,10 @@
 import { Layout } from '@/components'
-import { Container, Spacer, Text } from '@/modules/ui-components'
-import { ActionItem } from '@/modules/ui-components/src/ui/ActionItem'
+import { ActionItem } from '@/components'
 import { View } from 'react-native'
 import Fontisto from '@expo/vector-icons/Fontisto'
 import { useRouter } from 'expo-router'
-import { Ruller } from '@/modules/ui-components/atoms'
+import { Text, Ruller, Spacer } from '@berty/gnonative-ui'
+import Container from '@/components/layout/container'
 
 export default function Page() {
   const route = useRouter()

@@ -1,4 +1,4 @@
-import { Button, Spacer, Text, HomeLayout, ScreenHeader, SeedInputs } from '@/modules/ui-components'
+import { Text, Button, Spacer, HomeLayout } from '@berty/gnonative-ui'
 import { useState, useRef } from 'react'
 import {
   Alert,
@@ -14,6 +14,7 @@ import Clipboard from '@react-native-clipboard/clipboard'
 import { useAppDispatch, setPhrase, resetAddVaultState, checkPhrase } from '@/redux'
 import { useRouter, useFocusEffect } from 'expo-router'
 import styled from 'styled-components/native'
+import { ScreenHeader, SeedInputs } from '@/components'
 
 export default function Page() {
   const [menomicLength, setMenomicLength] = useState<12 | 24>(12)

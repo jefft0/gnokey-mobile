@@ -1,9 +1,9 @@
 import { Alert } from 'react-native'
 import { useRouter } from 'expo-router'
-import { Button, HomeLayout, ScreenHeader } from '@/modules/ui-components'
-import { SetupPassForm } from '@/modules/ui-components/organisms/SetupPassForm'
+import { Button, HomeLayout } from '@berty/gnonative-ui'
 import { useState } from 'react'
 import { createMasterPass, useAppDispatch } from '@/redux'
+import { ScreenHeader, SetupPassForm } from '@/components'
 
 export default function Page() {
   const [masterPassword, setMasterPassword] = useState<string | undefined>(undefined)
@@ -35,7 +35,7 @@ export default function Page() {
         </Button>
       }
     >
-      <SetupPassForm onPasswordDefined={(pass) => setMasterPassword(pass)} />
+      <SetupPassForm onPasswordDefined={(pass: any) => setMasterPassword(pass)} />
     </HomeLayout>
   )
 }
